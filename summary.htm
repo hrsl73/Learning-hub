@@ -1,0 +1,470 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Production Caching & Service Worker Architecture Guide</title>
+  </head>
+  <body
+    style="
+      font-family:
+        -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto,
+        Helvetica, Arial, sans-serif;
+      line-height: 1.7;
+      color: #1f2937;
+      padding: 24px;
+      max-width: 1000px;
+      margin: 0 auto;
+    "
+  >
+    <h1
+      style="
+        color: #111827;
+        border-bottom: 3px solid #3b82f6;
+        padding-bottom: 12px;
+        margin-bottom: 24px;
+      "
+    >
+      Production Caching &amp; Service Worker Architecture Guide
+    </h1>
+
+    <p style="font-size: 16px">
+      This document presents the complete technical specification for the
+      full-stack caching and Service Worker architecture used by the
+      <strong>e-building-flutter-app</strong> and
+      <strong>society-management-frontend</strong> repositories. It explains how
+      web assets are kept up-to-date, how Service Worker background updates
+      operate without user disruption, and how the mobile container interacts
+      with the web application.
+    </p>
+
+    <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 32px 0" />
+
+    <!-- SECTION 1: ARCHITECTURE OVERVIEW -->
+    <h2 style="color: #1d4ed8; margin-top: 32px">
+      1. Architecture Overview (The 2-Layer System)
+    </h2>
+
+    <p>
+      The application relies on a modern, 2-layer caching strategy that delivers
+      instant updates without interrupting active user workflows:
+    </p>
+
+    <ol style="padding-left: 20px">
+      <li style="margin-bottom: 12px">
+        <strong
+          >Layer 1: Server Freshness Rules (Vercel HTTP Revalidation)</strong
+        ><br />
+        Every time the app opens from a fresh launch, the browser revalidates
+        entry files over the network with Vercel. The server instantly serves
+        the latest <code>index.html</code> if a new deployment was pushed.
+      </li>
+      <li style="margin-bottom: 12px">
+        <strong
+          >Layer 2: Background Auto-Updater (Service Worker &amp;
+          AppRouteWatcher)</strong
+        ><br />
+        While a session is active, a background Service Worker process checks
+        for new server releases. When a new build is detected, it quietly
+        downloads assets in the background and applies them the moment the user
+        switches screens or resumes the app.
+      </li>
+    </ol>
+
+    <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 32px 0" />
+
+    <!-- SECTION 2: FLUTTER CONTAINER CONFIGURATION -->
+    <h2 style="color: #1d4ed8; margin-top: 32px">
+      2. Flutter Container Configuration (<code>e-building-flutter-app</code>)
+    </h2>
+
+    <p>
+      The Flutter mobile app acts as a clean, lightweight native WebView
+      container. Native storage code is streamlined so that Flutter delegates
+      web asset management directly to HTTP and Service Worker protocols.
+    </p>
+
+    <table
+      style="
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+        margin-bottom: 24px;
+      "
+    >
+      <thead>
+        <tr
+          style="
+            background-color: #f3f4f6;
+            border-bottom: 2px solid #e5e7eb;
+            text-align: left;
+          "
+        >
+          <th style="padding: 12px; border: 1px solid #e5e7eb; width: 30%">
+            File / Module
+          </th>
+          <th style="padding: 12px; border: 1px solid #e5e7eb; width: 35%">
+            Implementation Details
+          </th>
+          <th style="padding: 12px; border: 1px solid #e5e7eb; width: 35%">
+            Purpose &amp; Rationale
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            <code>lib/custom_class/utils/local_storage.dart</code>
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Contains native key-value storage helper methods for FCM tokens,
+            user flags, and redirect links.
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Maintains clean, minimal native state without tracking unnecessary
+            date timestamps or client-side calculation timers.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            <code>lib/ui/screen/web_view/web_view.dart</code> (Mount Logic)
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Configured <code>_shouldClearCacheOnMount()</code> to return
+            <code>true</code> <strong>only</strong> when
+            <code>clearCacheOnLoad: true</code> is explicitly passed during
+            active Login or Register flows.
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Ensures routine entry points (Push Notifications, Deep Links, App
+            Launches) never wipe session cache or log out users, while
+            preserving single-instance protection for post-login redirect
+            chains.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            <code>lib/ui/screen/web_view/web_view.dart</code> (Async Clear
+            Block)
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Uses <code>callAsyncJavaScript</code> with explicit Promise loops
+            for <code>caches.delete()</code> and
+            <code>navigator.serviceWorker.getRegistrations().unregister()</code
+            >.
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Native Android <code>clearCache()</code> leaves IndexedDB-backed
+            Workbox <code>CacheStorage</code> databases intact.
+            <code>callAsyncJavaScript</code> forces Dart to await complete JS
+            Promise resolution before loading the new page.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            <code>notification_services.dart</code> &amp;
+            <code>deep_link_service.dart</code>
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Explicitly passes <code>clearCacheOnLoad: false</code> across
+            notification taps and deep links. Left UI screens 100% untouched.
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Guarantees that tapping a push notification or deep link opens the
+            target route directly without clearing user session data.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 32px 0" />
+
+    <!-- SECTION 3: WEB FRONTEND CONFIGURATION -->
+    <h2 style="color: #1d4ed8; margin-top: 32px">
+      3. Web Frontend Configuration (<code>society-management-frontend</code>)
+    </h2>
+
+    <p>
+      The React web application handles application rendering, HTTP header
+      revalidation, and Service Worker background updates:
+    </p>
+
+    <div style="margin-bottom: 24px">
+      <h3 style="color: #111827; margin-bottom: 8px">
+        1. Server HTTP Revalidation Rules (<code>vercel.json</code>)
+      </h3>
+      <p style="margin-top: 0">
+        <strong>Implementation:</strong> Configured Vercel to attach
+        <code
+          >Cache-Control: no-store, no-cache, must-revalidate, max-age=0</code
+        >
+        header rules specifically to
+        <code>(index.html|sw.js|registerSW.js)</code>.<br />
+        <strong>Rationale:</strong> Forces mobile WebViews and desktop web
+        browsers to revalidate entry files over the network on every launch.
+        Cold starts immediately fetch the latest
+        <code>index.html</code> pointing to new build bundles. Hashed asset
+        bundles (images, CSS, JS chunks) retain long-term caching (<code
+          >max-age=31536000, immutable</code
+        >) for sub-second load performance.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 24px">
+      <h3 style="color: #111827; margin-bottom: 8px">
+        2. PWA Auto-Update Setup (<code>package.json</code> &amp;
+        <code>vite-env.d.ts</code>)
+      </h3>
+      <p style="margin-top: 0">
+        <strong>Implementation:</strong> Added
+        <code>"workbox-window": "^7.3.0"</code> to dependencies and added
+        <code>/// &lt;reference types="vite-plugin-pwa/client" /&gt;</code> in
+        <code>vite-env.d.ts</code>.<br />
+        <strong>Rationale:</strong> Resolves Rollup module import references
+        during Vite production builds and provides full TypeScript type
+        declarations for Service Worker registration APIs.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 24px">
+      <h3 style="color: #111827; margin-bottom: 8px">
+        3. Background Route &amp; Visibility Watcher
+        (<code>src/components/AppRouteWatcher.tsx</code>)
+      </h3>
+      <p style="margin-top: 0">
+        <strong>Implementation:</strong> Built a persistent watcher component
+        using <code>registerSW</code> from <code>virtual:pwa-register</code>.
+        Listens for <code>onNeedRefresh</code> and triggers official
+        <code>updateSW(true)</code> on
+        <strong>Client-Side Route Changes</strong>
+        (<code>location.pathname</code>) and
+        <strong>App Resume</strong> (<code>visibilitychange</code>).<br />
+        <strong>Rationale:</strong> Service Worker updates download silently in
+        the background. Applying updates on route switches or tab foregrounding
+        prevents disruptive mid-action reloads while ensuring users transition
+        to new builds at the earliest natural opportunity.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 24px">
+      <h3 style="color: #111827; margin-bottom: 8px">
+        4. Root Router Placement (<code>src/app.tsx</code>) &amp; Clean Entry
+        Point (<code>src/main.tsx</code>)
+      </h3>
+      <p style="margin-top: 0">
+        <strong>Implementation:</strong> Mounted
+        <code>&lt;AppRouteWatcher /&gt;</code> inside
+        <code>&lt;BrowserRouter&gt;</code> in <code>src/app.tsx</code>, keeping
+        <code>src/main.tsx</code> clean and lightweight.<br />
+        <strong>Rationale:</strong> Guarantees that
+        <code>AppRouteWatcher</code> stays active continuously across all route
+        switches without extra overhead in the main entry file.
+      </p>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 32px 0" />
+
+    <!-- SECTION 4: USER ACTION MATRIX -->
+    <h2 style="color: #1d4ed8; margin-top: 32px">
+      4. How User Actions Are Handled
+    </h2>
+
+    <table
+      style="
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+        margin-bottom: 24px;
+      "
+    >
+      <thead>
+        <tr
+          style="
+            background-color: #f3f4f6;
+            border-bottom: 2px solid #e5e7eb;
+            text-align: left;
+          "
+        >
+          <th style="padding: 12px; border: 1px solid #e5e7eb">User Action</th>
+          <th style="padding: 12px; border: 1px solid #e5e7eb">
+            Handling Layer
+          </th>
+          <th style="padding: 12px; border: 1px solid #e5e7eb">
+            System Behavior
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            <strong>1. Cold Launch (Opening App)</strong>
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Vercel HTTP Headers
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Revalidates <code>index.html</code> over network. Loads the latest
+            JS/CSS build assets on launch.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            <strong>2. Tapping a Push Notification</strong>
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Flutter Route Guard
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Passes <code>clearCacheOnLoad: false</code>. Target URL loads
+            directly without clearing cache or logging out the user.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            <strong>3. Tapping a Shared Link (Deep Link)</strong>
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Flutter Route Guard
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Passes <code>clearCacheOnLoad: false</code>. Opens the target link
+            cleanly while preserving the user's login session.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            <strong>4. Switching Screens Inside App</strong>
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            AppRouteWatcher
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            If a new build was deployed to Vercel while browsing, moving to a
+            new screen automatically reloads the app cleanly onto the new
+            version.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            <strong>5. Resuming App from Background</strong>
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Visibilitychange Listener
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            If the app was backgrounded while a new build was deployed, bringing
+            the app back to the foreground applies the update immediately.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            <strong>6. Explicit Login / Registration</strong>
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Flutter Async Clear Block
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb">
+            Passes <code>clearCacheOnLoad: true</code>. Executes full
+            <code>callAsyncJavaScript</code> purge (WebStorage,
+            <code>caches.delete()</code>, SW unregistration) to ensure a clean
+            session for the new account.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 32px 0" />
+
+    <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 32px 0" />
+
+    <!-- SECTION: PREVENTING LOGOUT ON NOTIFICATION CLICK -->
+    <h2 style="color: #1d4ed8; margin-top: 32px">
+      Preventing Logout on Push Notification Clicks (Flutter Side)
+    </h2>
+
+    <p>
+      To ensure that tapping a Push Notification opens the requested screen
+      directly without logging out the user or wiping their active session,
+      Flutter handles notification clicks through a 3-step guard flow:
+    </p>
+
+    <ol style="padding-left: 20px">
+      <li style="margin-bottom: 12px">
+        <strong
+          >Step 1: Explicit Route Parameter (<code>clearCacheOnLoad: false</code
+          >)</strong
+        ><br />
+        In <code>lib/services/notification_services.dart</code>, when a push
+        notification is tapped, Flutter navigates to the web view using:
+        <pre
+          style="
+            background-color: #f3f4f6;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            overflow-x: auto;
+          "
+        ><code>Get.offAll(() => WebAppView(url: url, clearCacheOnLoad: false));</code></pre>
+        This explicitly instructs the WebView container:
+        <em>"This is a notification tap—do NOT perform a cache wipe."</em>
+      </li>
+      <li style="margin-bottom: 12px">
+        <strong
+          >Step 2: Mount Guard Evaluation
+          (<code>_shouldClearCacheOnMount</code>)</strong
+        ><br />
+        In <code>lib/ui/screen/web_view/web_view.dart</code>, the mount handler
+        evaluates the parameters:
+        <pre
+          style="
+            background-color: #f3f4f6;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            overflow-x: auto;
+          "
+        ><code>Future&lt;bool&gt; _shouldClearCacheOnMount() async {
+  if (_initialCacheDecisionApplied) return false;
+  _initialCacheDecisionApplied = true;
+
+  if (widget.clearCacheOnLoad == true) return true;
+
+  final args = Get.arguments;
+  if (args is Map &amp;&amp; args['clearCacheOnLoad'] == true) return true;
+
+  return false; // Returns false for Notification &amp; Deep Link clicks!
+}</code></pre>
+        Because <code>clearCacheOnLoad</code> is <code>false</code>,
+        <code>_shouldClearCacheOnMount()</code> returns <code>false</code>.
+      </li>
+      <li style="margin-bottom: 12px">
+        <strong>Step 3: Skipping Cache &amp; Storage Purges</strong><br />
+        Because <code>_shouldClearCacheOnMount()</code> returns
+        <code>false</code>, Flutter completely skips calling
+        <code>controller.clearCache()</code> and
+        <code>callAsyncJavaScript(...)</code> (the script that clears
+        <code>localStorage</code>, <code>sessionStorage</code>, IndexedDB
+        caches, and Service Worker registrations).
+      </li>
+    </ol>
+
+    <div
+      style="
+        background-color: #ecfdf5;
+        border-left: 4px solid #10b981;
+        padding: 16px;
+        margin: 16px 0;
+        border-radius: 4px;
+      "
+    >
+      <h4 style="margin: 0 0 8px 0; color: #065f46">
+        Result on Notification Tap:
+      </h4>
+      <p style="margin: 0">
+        The user's active session, login tokens, and stored preferences remain
+        <strong>100% untouched</strong>. The WebView immediately opens the
+        notification target URL (e.g. <code>/notices/123</code> or
+        <code>/polls/456</code>) with the user remaining logged in seamlessly!
+      </p>
+    </div>
+  </body>
+</html>

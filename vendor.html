@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Services — Low-Level Design Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
+<style>
+:root {
+  --font-display: 'Sora', sans-serif;
+  --font-sans: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --brand: #8a1e47;
+  --brand-soft: #f4e3ea;
+  --brand-text: #6e1539;
+  --radius-sm: 6px;
+  --radius-md: 9px;
+  --radius-lg: 14px;
+}
+[data-theme="light"] {
+  --bg: #f6f4ef;
+  --bg-grid: rgba(138,30,71,0.035);
+  --surface: #ffffff;
+  --surface-2: #f1eee7;
+  --surface-3: #e9e5dc;
+  --text: #211f1d;
+  --text-2: #5f5c56;
+  --text-3: #8d8a82;
+  --border: rgba(33,31,29,0.10);
+  --border-2: rgba(33,31,29,0.18);
+  --accent: #8a1e47;
+  --accent-soft: #f6e1ea;
+  --accent-text: #6e1539;
+  --info-bg: #e6f1fb; --info-text: #0c447c; --info-border: #85b7eb;
+  --ok-bg: #e1f5ee; --ok-text: #0f6e56; --ok-border: #5dcaa5;
+  --warn-bg: #faeeda; --warn-text: #633806; --warn-border: #ef9f27;
+  --err-bg: #fcebeb; --err-text: #a32d2d; --err-border: #f09595;
+  --end-bg: #eeedfe; --end-text: #3c3489; --end-border: #afa9ec;
+  --miss-bg: #faece7; --miss-text: #712b13; --miss-border: #d85a30;
+  --shadow: 0 1px 2px rgba(33,31,29,0.04), 0 8px 24px rgba(33,31,29,0.05);
+}
+[data-theme="dark"] {
+  --bg: #16140f;
+  --bg-grid: rgba(244,201,219,0.025);
+  --surface: #211e18;
+  --surface-2: #2a261f;
+  --surface-3: #332e26;
+  --text: #f0ede4;
+  --text-2: #b6b2a8;
+  --text-3: #87837a;
+  --border: rgba(255,255,255,0.09);
+  --border-2: rgba(255,255,255,0.16);
+  --accent: #e07a9e;
+  --accent-soft: #3a1626;
+  --accent-text: #f4c0d1;
+  --info-bg: #0c2f50; --info-text: #b5d4f4; --info-border: #2d6093;
+  --ok-bg: #0c3329; --ok-text: #9fe1cb; --ok-border: #2a7a64;
+  --warn-bg: #3a2510; --warn-text: #fac775; --warn-border: #8a5a1e;
+  --err-bg: #3a1818; --err-text: #f0a0a0; --err-border: #7a3535;
+  --end-bg: #251f3e; --end-text: #cecbf6; --end-border: #4a4290;
+  --miss-bg: #361a10; --miss-text: #f0a884; --miss-border: #8a4527;
+  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 30px rgba(0,0,0,0.4);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  background-image:
+    linear-gradient(var(--bg-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+  color: var(--text);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* Header */
+header {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border-bottom: 1px solid var(--border);
+}
+.header-inner { max-width: 1180px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.brand-mark { display: flex; align-items: center; gap: 11px; }
+.brand-dot { width: 34px; height: 34px; border-radius: 9px; background: var(--accent); display: grid; place-items: center; color: #fff; font-size: 19px; flex-shrink: 0; }
+[data-theme="dark"] .brand-dot { color: #16140f; }
+.brand-title { font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: -0.01em; line-height: 1.2; }
+.brand-sub { font-size: 11.5px; color: var(--text-3); font-family: var(--font-mono); }
+.created-by { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: var(--radius-md); background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-text); }
+.created-by i { font-size: 15px; }
+.created-by .cb-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-text); font-family: var(--font-mono); }
+.created-by .cb-names { font-size: 12.5px; font-weight: 600; color: var(--accent-text); font-family: var(--font-display); white-space: nowrap; }
+.view-nav { display: flex; gap: 5px; margin-left: auto; background: var(--surface-2); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--border); flex-wrap: wrap; }
+.view-btn {
+  font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+  padding: 8px 15px; border-radius: var(--radius-sm); border: none; cursor: pointer;
+  background: transparent; color: var(--text-2); transition: all .18s; display: flex; align-items: center; gap: 7px; white-space: nowrap;
+}
+.view-btn:hover { color: var(--text); }
+.view-btn.active { background: var(--accent); color: #fff; box-shadow: var(--shadow); }
+[data-theme="dark"] .view-btn.active { color: #16140f; }
+.theme-toggle { width: 38px; height: 38px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-2); cursor: pointer; display: grid; place-items: center; font-size: 18px; transition: all .18s; }
+.theme-toggle:hover { color: var(--accent); border-color: var(--border-2); }
+
+/* Hero per view */
+.view-hero { padding: 40px 0 26px; }
+.view-hero h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4vw, 40px); letter-spacing: -0.025em; line-height: 1.05; margin-bottom: 12px; }
+.view-hero h1 .em { color: var(--accent); }
+.view-hero p { color: var(--text-2); font-size: 15px; max-width: 720px; }
+.hero-meta { display: flex; gap: 22px; margin-top: 20px; flex-wrap: wrap; }
+.hero-meta div { display: flex; flex-direction: column; }
+.hero-meta .num { font-family: var(--font-display); font-weight: 600; font-size: 22px; color: var(--text); }
+.hero-meta .lbl { font-size: 12px; color: var(--text-3); font-family: var(--font-mono); }
+
+/* View */
+.view { display: none; }
+.view.active { display: block; animation: fade .35s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Module tabs */
+.mod-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px; }
+.mod-tab {
+  font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+  padding: 8px 14px; border-radius: var(--radius-md); border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-2); cursor: pointer; transition: all .16s;
+}
+.mod-tab:hover { border-color: var(--border-2); color: var(--text); }
+.mod-tab.active { background: var(--accent-soft); color: var(--accent-text); border-color: var(--accent); }
+
+/* Legend */
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 24px; font-size: 12px; color: var(--text-2); padding: 13px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.ldot { width: 13px; height: 13px; border-radius: 4px; flex-shrink: 0; border: 1px solid; }
+
+/* Module panel */
+.mod { display: none; }
+.mod.active { display: block; animation: fade .3s ease; }
+.mod-head { margin-bottom: 18px; }
+.mod-head h2 { font-family: var(--font-display); font-weight: 600; font-size: 21px; letter-spacing: -0.015em; margin-bottom: 7px; }
+.mod-head p { color: var(--text-2); font-size: 14px; max-width: 760px; }
+.mod-stats { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0 22px; }
+.mod-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 11px 16px; min-width: 120px; }
+.mod-stat .v { font-family: var(--font-display); font-weight: 600; font-size: 19px; }
+.mod-stat .l { font-size: 11.5px; color: var(--text-3); font-family: var(--font-mono); }
+
+/* Flow nodes */
+.flow { position: relative; }
+.node { display: flex; align-items: flex-start; gap: 11px; padding: 12px 15px; border-radius: var(--radius-md); margin-bottom: 5px; font-size: 13.5px; line-height: 1.5; border: 1px solid var(--border); background: var(--surface); }
+.node i.ni { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+.node.start { background: var(--info-bg); color: var(--info-text); border-color: var(--info-border); font-weight: 500; }
+.node.step { background: var(--surface); border-left: 3px solid var(--accent); }
+.node.decision { background: var(--warn-bg); color: var(--warn-text); border-color: var(--warn-border); font-weight: 500; }
+.node.success { background: var(--ok-bg); color: var(--ok-text); border-color: var(--ok-border); }
+.node.error { background: var(--err-bg); color: var(--err-text); border-color: var(--err-border); }
+.node.warning { background: var(--warn-bg); color: var(--warn-text); border-color: var(--warn-border); }
+.node.end { background: var(--end-bg); color: var(--end-text); border-color: var(--end-border); font-weight: 500; }
+.node.missing { background: var(--miss-bg); color: var(--miss-text); border: 1px dashed var(--miss-border); border-left-width: 3px; font-style: italic; }
+.arrow { display: flex; align-items: center; padding-left: 30px; height: 20px; position: relative; }
+.arrow::before { content: ''; position: absolute; left: 30px; top: 0; width: 1.5px; height: 100%; background: var(--border-2); }
+.arrow::after { content: ''; position: absolute; left: 26px; bottom: 1px; width: 7px; height: 7px; border-left: 1.5px solid var(--border-2); border-bottom: 1.5px solid var(--border-2); transform: rotate(-45deg); }
+.branch { margin-left: 26px; border-left: 1.5px dashed var(--border-2); padding-left: 18px; margin-bottom: 5px; }
+.branch-lbl { font-size: 12px; font-weight: 600; color: var(--text-2); margin: 10px 0 7px; padding: 4px 11px; background: var(--surface-2); border-radius: var(--radius-sm); display: inline-block; border: 1px solid var(--border); }
+
+/* Swimlane */
+.lane-head { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; margin-bottom: 12px; position: sticky; top: 70px; z-index: 20; }
+.lane-title { text-align: center; padding: 11px 8px; border-radius: var(--radius-md); font-size: 13.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid; }
+.lane-cust { background: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
+.lane-plat { background: var(--end-bg); color: var(--end-text); border-color: var(--end-border); }
+.lane-vend { background: var(--ok-bg); color: var(--ok-text); border-color: var(--ok-border); }
+.phase-band { font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--text-2); background: var(--surface-2); padding: 8px 14px; border-radius: var(--radius-md); margin: 18px 0 10px; display: flex; align-items: center; gap: 9px; border: 1px solid var(--border); }
+.phase-num { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: var(--font-mono); }
+[data-theme="dark"] .phase-num { color: #16140f; }
+.lane-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; margin-bottom: 7px; }
+.lane-cell { display: flex; }
+.act { width: 100%; border-radius: var(--radius-md); padding: 11px 13px; font-size: 12.5px; line-height: 1.45; border: 1px solid var(--border); }
+.act.cust { background: var(--info-bg); border-color: var(--info-border); }
+.act.plat { background: var(--end-bg); border-color: var(--end-border); }
+.act.vend { background: var(--ok-bg); border-color: var(--ok-border); }
+.act.dec { background: var(--warn-bg); border-color: var(--warn-border); }
+.act.dec .act-t { color: var(--warn-text); }
+.act.isnew { border-style: dashed; border-width: 1.5px; }
+.act-t { font-weight: 600; display: block; margin-bottom: 3px; color: var(--text); }
+.act.cust .act-t { color: var(--info-text); } .act.plat .act-t { color: var(--end-text); } .act.vend .act-t { color: var(--ok-text); }
+.act-id { font-family: var(--font-mono); font-size: 10px; padding: 1px 5px; border-radius: 4px; margin-right: 6px; background: var(--surface); border: 1px solid var(--border); color: var(--text-2); }
+.act-d { color: var(--text-2); font-size: 12px; }
+[data-theme="light"] .act.cust .act-d, [data-theme="light"] .act.plat .act-d, [data-theme="light"] .act.vend .act-d, [data-theme="light"] .act.dec .act-d { color: color-mix(in srgb, currentColor 75%, var(--text)); }
+.act-tag { display: inline-block; font-size: 9.5px; padding: 1px 6px; border-radius: 4px; background: var(--miss-bg); color: var(--miss-text); margin-left: 5px; font-style: normal; font-weight: 500; border: 1px solid var(--miss-border); }
+.handoff { font-size: 10.5px; color: var(--text-3); display: flex; align-items: flex-start; gap: 5px; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border-2); }
+.lane-flow { text-align: center; color: var(--text-3); font-size: 13px; margin: 1px 0; }
+
+footer { margin-top: 50px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--text-3); font-size: 12px; font-family: var(--font-mono); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+@media (max-width: 760px) {
+  .lane-head, .lane-row { grid-template-columns: 1fr; }
+  .lane-head { display: none; }
+  .act::before { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); display: block; margin-bottom: 4px; }
+  .act.cust::before { content: 'CUSTOMER'; } .act.plat::before { content: 'PLATFORM'; } .act.vend::before { content: 'VENDOR'; }
+  .view-nav { width: 100%; margin-left: 0; }
+}
+
+/* Sequence / deep-dive view */
+.seq-note { display:flex; align-items:flex-start; gap:9px; font-size:12.5px; color:var(--text-2); padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:var(--radius-md); margin-bottom:22px; }
+.seq-note i { color:var(--accent); font-size:17px; margin-top:1px; flex-shrink:0; }
+.seq-diagram { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px 18px; margin-bottom:16px; overflow-x:auto; box-shadow:var(--shadow); }
+.seq-diagram .mermaid { text-align:center; min-height:40px; }
+.seq-diagram .mermaid svg { max-width:100%; height:auto; }
+.seq-diagram .mermaid .seq-loading { color:var(--text-3); font-size:13px; font-family:var(--font-mono); padding:20px; }
+.spec-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:6px 0 8px; }
+.spec-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; }
+.spec-card h4 { font-family:var(--font-display); font-size:13px; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:8px; color:var(--text); }
+.spec-card h4 i { color:var(--accent); font-size:16px; }
+.spec-card ul { list-style:none; display:flex; flex-direction:column; gap:7px; }
+.spec-card li { font-size:12.5px; color:var(--text-2); padding-left:15px; position:relative; line-height:1.5; }
+.spec-card li::before { content:''; position:absolute; left:0; top:8px; width:5px; height:5px; border-radius:50%; background:var(--accent); }
+.spec-card code { font-family:var(--font-mono); font-size:11px; background:var(--surface-2); padding:1px 5px; border-radius:4px; border:1px solid var(--border); color:var(--accent-text); }
+.spec-card .mth { font-family:var(--font-mono); font-size:9.5px; font-weight:600; padding:1px 5px; border-radius:4px; margin-right:5px; border:1px solid; }
+.mth.get { background:var(--info-bg); color:var(--info-text); border-color:var(--info-border); }
+.mth.post { background:var(--ok-bg); color:var(--ok-text); border-color:var(--ok-border); }
+.mth.ws { background:var(--end-bg); color:var(--end-text); border-color:var(--end-border); }
+.mth.evt { background:var(--warn-bg); color:var(--warn-text); border-color:var(--warn-border); }
+@media (max-width: 760px) { .spec-grid { grid-template-columns:1fr; } }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="brand-mark">
+      <div class="brand-dot"><i class="ti ti-sitemap"></i></div>
+      <div>
+        <div class="brand-title">Home Services Platform</div>
+        <div class="brand-sub">low-level design · architecture</div>
+      </div>
+    </div>
+    <div class="created-by"><i class="ti ti-users"></i><span class="cb-label">Created by</span><span class="cb-names">Bhargav · Kunj · Jaydeep</span></div>
+    <nav class="view-nav" id="viewNav">
+      <button class="view-btn active" data-view="vendor"><i class="ti ti-tools"></i>Vendor flow</button>
+      <button class="view-btn" data-view="user"><i class="ti ti-user"></i>User booking</button>
+      <button class="view-btn" data-view="e2e"><i class="ti ti-arrows-exchange"></i>End-to-end</button>
+      <button class="view-btn" data-view="seq"><i class="ti ti-timeline-event"></i>Deep dive</button>
+      <button class="view-btn" data-view="dispatch"><i class="ti ti-broadcast"></i>Slot dispatch</button>
+      <button class="view-btn" data-view="flow"><i class="ti ti-route"></i>Workflow</button>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="ti ti-moon"></i></button>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="view active" id="view-vendor"></section>
+  <section class="view" id="view-user"></section>
+  <section class="view" id="view-e2e"></section>
+  <section class="view" id="view-seq"></section>
+  <section class="view" id="view-dispatch"></section>
+  <section class="view" id="view-flow"></section>
+
+  <footer>
+    <span>Home Services LLD — vendor · customer · end-to-end · slot dispatch</span>
+    <span id="footStamp"></span>
+  </footer>
+</div>
+
+<script>
+/* ============ DATA ============ */
+const LEGEND = [
+  ['start','Start / trigger','var(--info-bg)','var(--info-border)'],
+  ['step','Action step','var(--surface)','var(--accent)'],
+  ['decision','Decision point','var(--warn-bg)','var(--warn-border)'],
+  ['success','Success','var(--ok-bg)','var(--ok-border)'],
+  ['error','Error / fail','var(--err-bg)','var(--err-border)'],
+  ['missing','Missing scenario (added)','var(--miss-bg)','var(--miss-border)']
+];
+
+const VENDOR = {
+  hero: { title:['Vendor flow ','architecture'], desc:'Complete low-level design for the technician/vendor application — registration, dashboard, the full job lifecycle, earnings, profile, and edge cases. Built from 44 Figma screens.', meta:[['9','Modules'],['44','Screens analyzed'],['20+','Gaps identified']] },
+  sections: [
+    { id:'v-onboarding', label:'1. Registration', title:'Vendor registration & onboarding', subtitle:'Multi-step signup wizard from language selection through profile verification — validation, document upload, and admin approval.', stats:[['14','Total screens'],['6','Decision points'],['~12','API calls']], nodes:[
+      {t:'start',i:'ti-player-play',x:'App launched → language selection (English / Hindi / Gujarati)'},
+      {t:'step',i:'ti-forms',x:'Create account: first/last name, email, phone, password, confirm'},
+      {t:'decision',i:'ti-shield-check',x:'Input validation: email format? phone? password strength? duplicates?'},
+      {b:'Validation fails',n:[{t:'error',i:'ti-alert-circle',x:'Inline field errors → user corrects → re-validate'}]},
+      {b:'Validation passes',n:[{t:'step',i:'ti-device-mobile',x:'Send OTP to registered mobile number'}]},
+      {t:'decision',i:'ti-clock',x:'OTP verification: correct code? within expiry window?'},
+      {b:'OTP invalid / expired',n:[{t:'error',i:'ti-refresh',x:'Error → resend OTP (30s cooldown) → max 3 retries'},{t:'missing',i:'ti-lock',x:'MISSING: account lockout after max OTP attempts (30-min cooldown)'}]},
+      {b:'OTP verified',n:[{t:'success',i:'ti-check',x:'Phone verified → proceed to role selection'}]},
+      {t:'step',i:'ti-user-plus',x:'Choose role → "Join as a Vendor" (benefits listed)'},
+      {t:'step',i:'ti-id',x:'Basic profile: business name, shop/flat no., building, area, experience, type'},
+      {t:'step',i:'ti-tools',x:'Select services: Plumbing, AC Service, Electrician, Housekeeping, Scrap, Painter'},
+      {t:'decision',i:'ti-map-pin',x:'Enable location access?'},
+      {b:'Allow location',n:[{t:'step',i:'ti-current-location',x:'Auto-detect GPS → resolve to service area'}]},
+      {b:'Enter manually',n:[{t:'step',i:'ti-writing',x:'Manual: state → city → service area (multi-select chips)'}]},
+      {t:'step',i:'ti-certificate',x:'Key skills + base price per skill per service area'},
+      {t:'step',i:'ti-calendar',x:'Availability: per-day toggle, time slots, emergency + holiday toggles'},
+      {t:'step',i:'ti-currency-rupee',x:'Pricing setup: set visiting charge (e.g., ₹350)'},
+      {t:'step',i:'ti-file-upload',x:'Document verification: Aadhaar front/back, certificates'},
+      {t:'decision',i:'ti-file-check',x:'Upload validation: file size? format? required docs present?'},
+      {b:'Upload fails',n:[{t:'error',i:'ti-photo-x',x:'Upload error → retry'},{t:'missing',i:'ti-scan',x:'MISSING: OCR Aadhaar validation / document authenticity check'}]},
+      {t:'step',i:'ti-building-bank',x:'Bank details: account holder, account number (confirm), IFSC (verify)'},
+      {t:'missing',i:'ti-shield',x:'MISSING: IFSC validation API → auto-fill bank name & branch'},
+      {t:'step',i:'ti-eye',x:'Review & submit: summary of all entered data'},
+      {t:'decision',i:'ti-checkbox',x:'Terms accepted? All required fields complete?'},
+      {t:'step',i:'ti-send',x:'Submit → POST /api/vendor/register'},
+      {t:'success',i:'ti-confetti',x:'Registration complete → "Your profile is under review" (1–2 days)'},
+      {t:'missing',i:'ti-mail',x:'MISSING: email/SMS submission confirmation + review timeline'},
+      {t:'missing',i:'ti-dashboard',x:'MISSING: admin review dashboard (approve / reject / request info)'},
+      {t:'end',i:'ti-flag',x:'Profile approved → vendor can go online'}
+    ]},
+    { id:'v-dashboard', label:'2. Dashboard', title:'Vendor dashboard & request management', subtitle:'Home screen with real-time request handling, online/offline toggle, and job categorization across instant, scheduled, and upcoming.', stats:[['3','Request types'],['8','Actions'],['4','Real-time events']], nodes:[
+      {t:'start',i:'ti-home',x:'Vendor opens app → Dashboard (Home tab)'},
+      {t:'step',i:'ti-user',x:'Display: greeting, rating (4.8), total pickups (1,245)'},
+      {t:'decision',i:'ti-toggle-right',x:'Online/Offline toggle status?'},
+      {b:'Offline',n:[{t:'warning',i:'ti-moon',x:'Offline → no new requests → "Go online to receive requests"'},{t:'missing',i:'ti-bell',x:'MISSING: push prompt to go online during peak hours'}]},
+      {b:'Online',n:[{t:'success',i:'ti-bolt',x:'Online → real-time listening via WebSocket / FCM'}]},
+      {t:'step',i:'ti-report-money',x:"Today's summary: earnings (₹1,450) + completed jobs (02)"},
+      {t:'step',i:'ti-bell-ringing',x:'① INSTANT REQUEST: 60s countdown — name, slot, address, service'},
+      {t:'decision',i:'ti-clock',x:'Timer expires before action?'},
+      {b:'Timer expired',n:[{t:'error',i:'ti-clock-x',x:'Auto-declined → reassigned to next vendor'},{t:'missing',i:'ti-chart-line',x:'MISSING: track timeout rate, flag high-timeout vendors'}]},
+      {b:'Vendor acts',n:[{t:'decision',i:'ti-thumb-up',x:'Accept or Decline?'}]},
+      {t:'step',i:'ti-list',x:'② CUSTOMER REQUESTS: pending queue (4 New) → Accept / Decline'},
+      {t:'step',i:'ti-calendar-event',x:'③ UPCOMING JOBS: future jobs → Schedule / Message'},
+      {t:'step',i:'ti-player-play',x:"④ SCHEDULED JOBS: today's confirmed → Start / Message"},
+      {t:'missing',i:'ti-filter',x:'MISSING: filter by service type, distance, price range'},
+      {t:'missing',i:'ti-sort-ascending',x:'MISSING: priority sorting (higher pay, closer, repeat customers)'},
+      {t:'missing',i:'ti-bell-off',x:'MISSING: do-not-disturb / snooze requests during break'},
+      {t:'end',i:'ti-layout-dashboard',x:'Bottom nav: Home | History | Earnings | Profile'}
+    ]},
+    { id:'v-lifecycle', label:'3. Job lifecycle', title:'Complete job lifecycle (accept → complete → payment)', subtitle:'End-to-end from accepting a request through navigation, service delivery, billing, and payment confirmation.', stats:[['7','Lifecycle stages'],['10','Screens'],['~8','API calls']], nodes:[
+      {t:'start',i:'ti-check',x:'Vendor accepts → status "Ongoing Service"'},
+      {t:'step',i:'ti-map',x:'Navigation: route, ETA (12 min), distance (3.5 km), arrival time'},
+      {t:'step',i:'ti-user-circle',x:'Customer card: name, status, address, service + est. weight'},
+      {t:'step',i:'ti-phone',x:'Actions: call, open in Maps, message'},
+      {t:'decision',i:'ti-dots-vertical',x:'"..." menu → Pickup Options bottom sheet'},
+      {b:'Open in Maps',n:[{t:'step',i:'ti-external-link',x:'Deep link to Google/Apple Maps with coordinates'}]},
+      {b:'Message Customer',n:[{t:'step',i:'ti-message',x:'In-app chat: text + photo + camera'},{t:'missing',i:'ti-photo',x:'MISSING: confirmed image sharing in chat'}]},
+      {b:'Report Issue',n:[{t:'step',i:'ti-alert-triangle',x:'Report: not reachable / wrong location / not available / breakdown / other'},{t:'step',i:'ti-writing',x:'Comments → Submit → notify admin'},{t:'missing',i:'ti-headset',x:'MISSING: auto-escalation if unresolved in 15 min'}]},
+      {b:'Cancel Pickup',n:[{t:'step',i:'ti-x',x:'Cancel: unavailable / breakdown / traffic / wrong address / other'},{t:'missing',i:'ti-coin',x:'MISSING: cancellation penalty logic (fee, rating impact)'}]},
+      {t:'step',i:'ti-map-pin-check',x:'Arrive → "Mark as Arrived"'},
+      {t:'missing',i:'ti-gps',x:'MISSING: geo-fence — enable "Arrived" only within 200m'},
+      {t:'step',i:'ti-player-play',x:'Active Job → "Start Service" → timer starts (00:00:00)'},
+      {t:'step',i:'ti-clock',x:'IN PROGRESS: live timer, service name, base price (₹450)'},
+      {t:'step',i:'ti-plus',x:'Add services: Gas Filling, Filter Cleaning, Water Heater'},
+      {t:'missing',i:'ti-camera',x:'MISSING: before/after photo capture for proof of work'},
+      {t:'missing',i:'ti-signature',x:'MISSING: customer signature / OTP before completing'},
+      {t:'step',i:'ti-circle-check',x:'"Mark as Completed" → generate invoice'},
+      {t:'step',i:'ti-receipt',x:'Payment Collection: base ₹450 + added ₹780 = ₹1,230'},
+      {t:'step',i:'ti-cash',x:'"Confirm ₹1230 Collected" → payment recorded'},
+      {t:'decision',i:'ti-credit-card',x:'Payment method? (UPI / Cash / Card / Wallet)'},
+      {b:'UPI',n:[{t:'step',i:'ti-qrcode',x:'Show UPI QR → customer scans → webhook confirmation'}]},
+      {b:'Cash',n:[{t:'step',i:'ti-cash',x:'Confirm cash → platform commission deducted from wallet'}]},
+      {t:'success',i:'ti-circle-check',x:'Payment Received! ₹1,230 — TXN ID, Job ID, method, paid by'},
+      {t:'missing',i:'ti-star',x:'MISSING: prompt customer to rate vendor'},
+      {t:'missing',i:'ti-receipt-2',x:'MISSING: auto PDF receipt → share via WhatsApp/email'},
+      {t:'end',i:'ti-flag',x:'Job complete → vendor returns to available pool'}
+    ]},
+    { id:'v-decline', label:'4. Decline', title:'Request decline & rejection', subtitle:'Vendor-initiated decline with reason tracking and customer notification.', stats:[['5','Decline reasons'],['3','Screens']], nodes:[
+      {t:'start',i:'ti-x',x:'Vendor taps "Decline" on a request card'},
+      {t:'step',i:'ti-user',x:'Decline screen: customer info, verified badge, item tags'},
+      {t:'step',i:'ti-list-check',x:'Reason (REQUIRED): items not acceptable / price / unavailable / other'},
+      {t:'step',i:'ti-message',x:'Optional message to customer (0/200 chars)'},
+      {t:'decision',i:'ti-click',x:'Confirm Decline or Cancel?'},
+      {b:'Cancel (go back)',n:[{t:'step',i:'ti-arrow-back',x:'Return to request — still available'}]},
+      {b:'Confirm Decline',n:[{t:'step',i:'ti-send',x:'POST /api/request/{id}/decline → notify customer'},{t:'success',i:'ti-clipboard-check',x:'Request Declined — customer notified'},{t:'step',i:'ti-archive',x:'Declined summary: ARCHIVED'}]},
+      {t:'missing',i:'ti-alert-triangle',x:'MISSING: decline-rate tracking, warn if >30% (suspension risk)'},
+      {t:'missing',i:'ti-arrows-transfer-down',x:'MISSING: auto-reassign to next vendor after decline'},
+      {t:'missing',i:'ti-ban',x:'MISSING: cooldown — frequent declines deprioritize in queue'},
+      {t:'end',i:'ti-flag',x:'Decline recorded → removed from queue'}
+    ]},
+    { id:'v-scheduled', label:'5. Scheduled', title:'Scheduled & upcoming jobs', subtitle:'Time-based job views with today/tomorrow/weekly filters and pre-service communication.', stats:[['3','Views (tabs)'],['4','Actions/job']], nodes:[
+      {t:'start',i:'ti-calendar',x:'Scheduled Jobs (from "View all" or nav)'},
+      {t:'step',i:'ti-filter',x:'Tab filters: Today | Tomorrow | This Week'},
+      {t:'step',i:'ti-list',x:'Job cards: customer, slot, address, call/start/message'},
+      {t:'decision',i:'ti-calendar-event',x:'"This Week": jobs grouped by date'},
+      {t:'step',i:'ti-player-play',x:'"Start" → navigation → enters job lifecycle'},
+      {t:'step',i:'ti-message',x:'"Message" → in-app chat'},
+      {t:'missing',i:'ti-bell',x:'MISSING: auto-reminder 30 min before scheduled job'},
+      {t:'missing',i:'ti-calendar-x',x:'MISSING: reschedule flow (request new time → customer approves)'},
+      {t:'missing',i:'ti-route',x:'MISSING: route optimization for multiple same-day jobs'},
+      {t:'missing',i:'ti-clock-edit',x:'MISSING: late-arrival auto-notify if ETA exceeds slot'},
+      {t:'end',i:'ti-flag',x:'Start → transitions to job lifecycle'}
+    ]},
+    { id:'v-history', label:'6. History', title:'Booking history & records', subtitle:'Completed and cancelled jobs with receipt access and cancellation-reason visibility.', stats:[['2','History tabs'],['3','Actions']], nodes:[
+      {t:'start',i:'ti-history',x:'History tab (bottom nav)'},
+      {t:'step',i:'ti-filter',x:'Tabs: Cancelled | Completed'},
+      {t:'decision',i:'ti-eye',x:'Which tab?'},
+      {b:'Cancelled',n:[{t:'step',i:'ti-x',x:'Cancelled jobs: customer, date, address, reason badge'},{t:'missing',i:'ti-filter',x:'MISSING: filter by reason, date, who cancelled'}]},
+      {b:'Completed',n:[{t:'step',i:'ti-check',x:'Completed jobs + "View Receipt" → invoice'},{t:'missing',i:'ti-star',x:'MISSING: show rating & review received per job'}]},
+      {t:'missing',i:'ti-search',x:'MISSING: search by customer name or job ID'},
+      {t:'missing',i:'ti-download',x:'MISSING: export history as CSV/PDF for tax'},
+      {t:'missing',i:'ti-chart-bar',x:'MISSING: monthly analytics (jobs, earnings trend, top services)'},
+      {t:'end',i:'ti-flag',x:'Read-only reference for past activity'}
+    ]},
+    { id:'v-earnings', label:'7. Earnings', title:'Earnings, wallet & finance', subtitle:'Wallet balance management — add money, withdrawal, transaction history, multiple payment methods.', stats:[['4','Payment methods'],['5','Txn types'],['9','Screens']], nodes:[
+      {t:'start',i:'ti-wallet',x:'Earnings tab → available balance (₹12,450)'},
+      {t:'step',i:'ti-info-circle',x:'Note: withdraw now → next withdraw only after 7 days'},
+      {t:'step',i:'ti-list',x:'Transaction History: All | Pending + Filter'},
+      {t:'step',i:'ti-arrows-sort',x:'Txn types: job credits (Pending/Completed), withdrawals'},
+      {t:'decision',i:'ti-click',x:'Withdraw or Add Money?'},
+      {b:'Add Money',n:[{t:'step',i:'ti-plus',x:'Enter amount (chips +₹500/1k/2k), balance shown'},{t:'step',i:'ti-credit-card',x:'Method: Bank, UPI, Card, Net Banking'},{t:'step',i:'ti-loader',x:'Processing (Finlux Encryption) — TXN ID'},{t:'success',i:'ti-check',x:'Money Added! new wallet balance (₹17,450)'},{t:'missing',i:'ti-receipt-refund',x:'MISSING: payment failure — retry / different method / refund'}]},
+      {b:'Withdraw',n:[{t:'step',i:'ti-arrow-bar-down',x:'Enter amount, available shown'},{t:'step',i:'ti-building-bank',x:'Select bank (HDFC ...1234) or add new (IFSC verify)'},{t:'step',i:'ti-eye-check',x:'Confirm: fee FREE, arrives <30 min, 256-bit encrypted'},{t:'success',i:'ti-check',x:'Withdrawal Successful! TXN ID, destination, ETA'}]},
+      {t:'missing',i:'ti-alert-circle',x:'MISSING: insufficient-balance check (disable if amount > balance)'},
+      {t:'missing',i:'ti-calendar-dollar',x:'MISSING: auto-payout settings (weekly to bank)'},
+      {t:'missing',i:'ti-file-invoice',x:'MISSING: monthly earnings statement for GST'},
+      {t:'missing',i:'ti-coin',x:'MISSING: platform commission breakdown visibility'},
+      {t:'end',i:'ti-flag',x:'Financial transaction complete'}
+    ]},
+    { id:'v-profile', label:'8. Profile', title:'Profile management & settings', subtitle:'All vendor settings — personal info, skills/pricing, areas, availability, bank, language, preferences.', stats:[['8','Sections'],['~25','Editable fields']], nodes:[
+      {t:'start',i:'ti-user',x:'Profile: photo, name, phone, rating, total pickups'},
+      {t:'step',i:'ti-id',x:'Basic Profile Info: name, email, phone, DOB, photo'},
+      {t:'step',i:'ti-tools',x:'Key Skills & Price: visiting charge + per-skill pricing by area'},
+      {t:'step',i:'ti-map',x:'Service Areas: state → city → area (multi-select chips)'},
+      {t:'step',i:'ti-calendar',x:'Manage Availability: day toggles, slots, emergency, holidays'},
+      {t:'step',i:'ti-building-bank',x:'Bank Details: holder, account number, IFSC (verify)'},
+      {t:'step',i:'ti-language',x:'Language: English / Hindi / Gujarati'},
+      {t:'step',i:'ti-help',x:'Help & Support: FAQ, contact, raise ticket'},
+      {t:'step',i:'ti-settings',x:'Settings: notifications, privacy, data'},
+      {t:'step',i:'ti-logout',x:'Logout → clear session → login'},
+      {t:'missing',i:'ti-photo',x:'MISSING: portfolio/gallery of past work'},
+      {t:'missing',i:'ti-certificate',x:'MISSING: certification renewal alerts'},
+      {t:'missing',i:'ti-shield-check',x:'MISSING: periodic KYC re-verification (12 months)'},
+      {t:'missing',i:'ti-device-mobile',x:'MISSING: change phone with OTP re-verification'},
+      {t:'missing',i:'ti-lock',x:'MISSING: change password / 2FA (biometric)'},
+      {t:'missing',i:'ti-trash',x:'MISSING: account deletion (GDPR) with grace period'},
+      {t:'end',i:'ti-flag',x:'Changes saved → reflected across app'}
+    ]},
+    { id:'v-edge', label:'9. Edge cases', title:'Missing scenarios & edge cases', subtitle:'Critical flows absent from current Figma designs but essential for production readiness.', stats:[['12','Critical gaps'],['8','Nice-to-haves']], nodes:[
+      {t:'missing',i:'ti-wifi-off',x:'OFFLINE MODE: queue actions locally → sync on reconnect → offline banner'},
+      {t:'missing',i:'ti-refresh',x:'SESSION EXPIRY: auto-logout, token rotation, re-auth prompt'},
+      {t:'missing',i:'ti-device-mobile-vibration',x:'PUSH HANDLING: tap notification → deep link to screen'},
+      {t:'missing',i:'ti-arrows-double-se-nw',x:'CONCURRENT REQUESTS: 2+ at once → stacked cards with priority'},
+      {t:'missing',i:'ti-map-pin-off',x:'GPS FAILURE: fallback to manual entry → warn customer of delay'},
+      {t:'missing',i:'ti-battery-1',x:'LOW BATTERY: reduce GPS polling, warn vendor, notify customer'},
+      {t:'missing',i:'ti-user-off',x:'CUSTOMER NO-SHOW: wait timer (15 min) → auto-cancel + partial pay'},
+      {t:'missing',i:'ti-mood-angry',x:'DISPUTE RESOLUTION: freeze payment → admin review → notify both'},
+      {t:'missing',i:'ti-arrow-back-up',x:'REFUND FLOW: customer requests → vendor confirms → 5–7 days'},
+      {t:'missing',i:'ti-versions',x:'APP UPDATE: force update (breaking) / soft prompt (minor)'},
+      {t:'missing',i:'ti-error-404',x:'ERROR STATES: generic error → retry → report → cached fallback'},
+      {t:'missing',i:'ti-loader',x:'LOADING / SKELETON states for data-heavy screens'},
+      {t:'missing',i:'ti-mood-empty',x:'EMPTY STATES: no requests, no history, no scheduled jobs'},
+      {t:'missing',i:'ti-accessible',x:'ACCESSIBILITY: screen reader, text sizing, high contrast, RTL'},
+      {t:'missing',i:'ti-shield-lock',x:'FRAUD DETECTION: cancellations, location spoofing, anomalies'},
+      {t:'missing',i:'ti-award',x:'GAMIFICATION: levels/badges, streak bonuses, leaderboards'},
+      {t:'missing',i:'ti-school',x:'ONBOARDING TUTORIAL: first-time walkthrough, tooltips'},
+      {t:'missing',i:'ti-clipboard-data',x:'ANALYTICS: performance metrics, demand heatmap, peak hours'},
+      {t:'missing',i:'ti-users-group',x:'REFERRAL: invite vendors → bonus → share via WhatsApp'},
+      {t:'missing',i:'ti-message-chatbot',x:'IN-APP SUPPORT: AI chatbot → escalate to agent → ticketing'}
+    ]}
+  ]
+};
+
+const USER = {
+  hero: { title:['User booking ','architecture'], desc:'Complete low-level design for the customer booking app inside a society/community platform — dashboard, booking, matching, tracking, payment, history, and cancellation. Built from 32 Figma screens.', meta:[['11','Modules'],['32','Screens analyzed'],['20+','Gaps identified']] },
+  sections: [
+    { id:'u-entry', label:'1. App & dashboard', title:'App entry & society dashboard', subtitle:'Resident home screen — home services sit alongside bills, amenities, complaints, and member management.', stats:[['3','Dashboard modules'],['4','Home services'],['7','Quick actions']], nodes:[
+      {t:'start',i:'ti-player-play',x:'Resident logs in → Dashboard (location header, greeting)'},
+      {t:'step',i:'ti-grid-dots',x:'Quick Actions: Bills, Expense, Guests, Amenities, Notice Board, Complaints, Members'},
+      {t:'step',i:'ti-tools',x:'Home Services: Scrap Dealer, AC Repair, Plumber, Housekeeping'},
+      {t:'step',i:'ti-building',x:'Management: Vehicles, Agencies, Family Members'},
+      {t:'step',i:'ti-activity',x:'Active booking cards inline with live status badges (Finding Tech → Service in Progress)'},
+      {t:'decision',i:'ti-click',x:'Resident taps a home service (e.g., AC Repair)?'},
+      {t:'step',i:'ti-layout-bottombar',x:'Bottom nav: Home | Alerts | (book) | Members | Setting'},
+      {t:'missing',i:'ti-bell',x:'MISSING: alerts/notification center (updates, notices, reminders)'},
+      {t:'missing',i:'ti-search',x:'MISSING: global search + universal "what do you need?" entry'},
+      {t:'missing',i:'ti-star',x:'MISSING: favorite/recent services for one-tap rebooking'},
+      {t:'end',i:'ti-arrow-right',x:'Navigate to service home → booking flow'}
+    ]},
+    { id:'u-mode', label:'2. Booking mode', title:'Service home & booking mode', subtitle:'Service-specific landing where the customer picks instant on-demand or a scheduled appointment — the fork that drives everything downstream.', stats:[['2','Booking modes'],['3','Entry widgets']], nodes:[
+      {t:'start',i:'ti-air-conditioning',x:'Service home (e.g., "Book AC Service") + tips + recent bookings'},
+      {t:'step',i:'ti-clock-bolt',x:'Two cards: Instant Booking (2–4 hrs) vs Schedule Service (date/time)'},
+      {t:'decision',i:'ti-git-branch',x:'Which booking mode?'},
+      {b:'Instant Booking',n:[{t:'step',i:'ti-bolt',x:'On-demand → service selection → triggers live matching'}]},
+      {b:'Schedule Service',n:[{t:'step',i:'ti-calendar',x:'Scheduled → service selection → date/time picker → confirm'}]},
+      {t:'step',i:'ti-list',x:'"Your Bookings": recent + active with status / Bill Details'},
+      {t:'step',i:'ti-bulb',x:'Quick Tips + "Need Help?" (Call / Chat Support)'},
+      {t:'missing',i:'ti-coin',x:'MISSING: show price range / visiting charge upfront'},
+      {t:'missing',i:'ti-repeat',x:'MISSING: "Rebook last service" shortcut'},
+      {t:'end',i:'ti-arrow-right',x:'Proceed to service selection'}
+    ]},
+    { id:'u-cart', label:'3. Service & cart', title:'Service selection & cart building', subtitle:'Pick service categories, then add specific line items (with prices, ratings, reviews) to a running cart.', stats:[['6','Categories'],['4+','Sub-tabs'],['3','Screens']], nodes:[
+      {t:'start',i:'ti-checkbox',x:'Select Services: "What are you looking for?" (multi-select)'},
+      {t:'step',i:'ti-grid-dots',x:'Categories: Plumbing, AC Repair, Electrician, Housekeeping, Scrap, Painter + search'},
+      {t:'step',i:'ti-list-details',x:'Catalog with sub-tabs: Servicing, Repair, Installation, Gas Refill'},
+      {t:'step',i:'ti-shopping-cart-plus',x:'Line items: AC Deep Cleaning (₹45, 4.9★), Regular Service (₹19), Gas Refill — Add / View Details'},
+      {t:'decision',i:'ti-shopping-cart',x:'Add items to cart?'},
+      {t:'step',i:'ti-receipt',x:'Running summary: "1 item — ₹29.00" → "Continue to Schedule"'},
+      {t:'missing',i:'ti-photo',x:'MISSING: real item photos + detailed description modal'},
+      {t:'missing',i:'ti-trash',x:'MISSING: cart edit/remove — change qty, remove before checkout'},
+      {t:'missing',i:'ti-discount',x:'MISSING: apply coupon / promo code'},
+      {t:'missing',i:'ti-info-circle',x:'MISSING: "View Details" content (inclusions, duration, warranty)'},
+      {t:'end',i:'ti-arrow-right',x:'Proceed to address or schedule'}
+    ]},
+    { id:'u-address', label:'4. Address', title:'Service location & address management', subtitle:'Confirm where the service happens — saved addresses, current location, or a new one.', stats:[['3','Address types'],['2','Entry methods']], nodes:[
+      {t:'start',i:'ti-map-pin',x:'Service Location: "Use current location" or saved address'},
+      {t:'step',i:'ti-home',x:'Saved: Home (DEFAULT), Office, Other — full address + radio'},
+      {t:'decision',i:'ti-git-branch',x:'Saved, current location, or add new?'},
+      {b:'Use current location',n:[{t:'step',i:'ti-current-location',x:'GPS auto-detect → resolve to address'}]},
+      {b:'Add new address',n:[{t:'step',i:'ti-writing',x:'Form: flat/building, area, pincode, city, Save As'},{t:'step',i:'ti-device-floppy',x:'Save Address → added to list'}]},
+      {t:'step',i:'ti-edit',x:'Edit existing: inline pencil icons per field'},
+      {t:'step',i:'ti-check',x:'Confirm Selection → "Continue to Date & Time"'},
+      {t:'missing',i:'ti-map-search',x:'MISSING: map pin-drop for precise location'},
+      {t:'missing',i:'ti-alert-triangle',x:'MISSING: coverage check — warn if outside vendor area'},
+      {t:'missing',i:'ti-trash',x:'MISSING: delete address + set-as-default management'},
+      {t:'end',i:'ti-arrow-right',x:'Address confirmed → schedule or matching'}
+    ]},
+    { id:'u-schedule', label:'5. Schedule', title:'Schedule service & confirmation', subtitle:'Scheduled path: pick date and slot, add notes, review itemized total, confirm.', stats:[['3','Time slots'],['2','Screens']], nodes:[
+      {t:'start',i:'ti-calendar',x:'Schedule Service: service location at top'},
+      {t:'step',i:'ti-calendar-event',x:'Select Date: horizontal picker (Today / Mon 15 / Tue 16 ...)'},
+      {t:'step',i:'ti-clock',x:'Time Slot: 06–10 AM / 10 AM–02 PM / 02–06 PM (single)'},
+      {t:'step',i:'ti-message',x:'Notes (optional): "Drop your message here..."'},
+      {t:'step',i:'ti-receipt',x:'Itemized total: AC Cleaning ₹49 + AC Repair ₹49 → ₹49.00'},
+      {t:'decision',i:'ti-check',x:'Confirm Booking?'},
+      {t:'step',i:'ti-send',x:'POST /api/booking/create → persist + apply society discount'},
+      {t:'success',i:'ti-circle-check',x:'Booking Confirmed! details + "Need Help? Chat Support"'},
+      {t:'missing',i:'ti-calendar-x',x:'MISSING: slot-availability — grey out fully-booked slots'},
+      {t:'missing',i:'ti-bell',x:'MISSING: add-to-calendar + reminder before slot'},
+      {t:'missing',i:'ti-edit',x:'MISSING: reschedule a confirmed booking before assignment'},
+      {t:'end',i:'ti-arrow-right',x:'Booking created → matching begins → tracking'}
+    ]},
+    { id:'u-matching', label:'6. Matching', title:'Instant booking — technician matching', subtitle:'Instant path: platform scans for the nearest available technician with a live "Finding an expert" experience.', stats:[['< 1 min','Match window'],['2','Screens']], nodes:[
+      {t:'start',i:'ti-bolt',x:'Instant booking confirmed → matching engine triggered'},
+      {t:'step',i:'ti-radar',x:'"Finding an expert..." radar scan, "< 1 minute"'},
+      {t:'step',i:'ti-receipt',x:'Booking Request card: service, address, Base Charge + Cancel'},
+      {t:'decision',i:'ti-users',x:'Technician found within radius & accepts?'},
+      {b:'None available',n:[{t:'error',i:'ti-user-off',x:'"No experts available" → expand radius / retry / schedule'},{t:'missing',i:'ti-arrows-maximize',x:'MISSING: auto-expand radius + fallback to scheduled'}]},
+      {b:'Assigned',n:[{t:'success',i:'ti-user-check',x:'"Technician Assigned!" — expert accepted, departing'},{t:'step',i:'ti-user',x:'Card: name, role, 4.9 rating, ETA 15 min, "On the way"'},{t:'step',i:'ti-phone',x:'Actions: Contact, Chat, Track Technician, Back to Home'}]},
+      {t:'missing',i:'ti-clock-x',x:'MISSING: matching timeout — what if no vendor accepts'},
+      {t:'missing',i:'ti-refresh',x:'MISSING: reassignment notice if technician cancels mid-flow'},
+      {t:'end',i:'ti-arrow-right',x:'Assigned → live tracking'}
+    ]},
+    { id:'u-tracking', label:'7. Track', title:'Live service tracking', subtitle:'Customer follows the technician through a 7-stage timeline with live ETA, navigation, and contact.', stats:[['7','Status stages'],['Real-time','Updates']], nodes:[
+      {t:'start',i:'ti-map',x:'Track Service / Pickup Tracker opens'},
+      {t:'step',i:'ti-timeline',x:'Timeline: Booking confirmed → Tech assigned → Tech scheduled → On the way → Arrived → In progress → Completed'},
+      {t:'step',i:'ti-clock',x:'ETA (15 min) + technician profile + Contact / Chat'},
+      {t:'step',i:'ti-navigation',x:'"Navigate" link at "on the way" stage'},
+      {t:'step',i:'ti-refresh',x:'Dashboard cards mirror live status badges'},
+      {t:'decision',i:'ti-x',x:'Customer taps "Cancel Service"?'},
+      {b:'Cancel during tracking',n:[{t:'step',i:'ti-arrow-right',x:'Goes to Cancel/Decline flow'}]},
+      {t:'missing',i:'ti-map-2',x:'MISSING: live map with moving technician marker'},
+      {t:'missing',i:'ti-bell-ringing',x:'MISSING: push notification on each status change'},
+      {t:'missing',i:'ti-share',x:'MISSING: share live tracking link with family'},
+      {t:'missing',i:'ti-shield-check',x:'MISSING: verify technician ID (photo), SOS button'},
+      {t:'end',i:'ti-flag',x:'Completed → invoice & payment'}
+    ]},
+    { id:'u-payment', label:'8. Complete & pay', title:'Completion, rating & payment', subtitle:'On completion the customer reviews the invoice, rates (with tip), chooses a payment method, and gets a receipt.', stats:[['7','Payment methods'],['4','Screens']], nodes:[
+      {t:'start',i:'ti-circle-check',x:'"Job Done!" — "Your AC is now running smoothly"'},
+      {t:'step',i:'ti-user',x:'Technician card with rating'},
+      {t:'step',i:'ti-receipt',x:'Invoice: Base ₹29 + Parts ₹45 − Society Discount ₹5 = ₹69'},
+      {t:'step',i:'ti-star',x:'"How was the service?" 1–5 stars + tip/compliment field'},
+      {t:'decision',i:'ti-credit-card',x:'Tap "Pay ₹69" → choose method'},
+      {t:'step',i:'ti-wallet',x:'Payment Selection: GPay/BHIM/Paytm/PhonePe/Amazon/SuperMoney + COD'},
+      {t:'step',i:'ti-loader',x:'Processing (Lumina Encryption)'},
+      {t:'decision',i:'ti-shield-check',x:'Gateway response?'},
+      {b:'Fails',n:[{t:'error',i:'ti-credit-card-off',x:'Failure → retry / another method'},{t:'missing',i:'ti-refresh',x:'MISSING: failure screen + auto-retry + COD fallback'}]},
+      {b:'Succeeds',n:[{t:'success',i:'ti-check',x:'Payment Successful! amount, TXN ID, method, Completed'},{t:'step',i:'ti-download',x:'Actions: Back to Home + "Download Receipt"'}]},
+      {t:'missing',i:'ti-star-half',x:'MISSING: rating skippable — enforce or remind later'},
+      {t:'missing',i:'ti-message-2',x:'MISSING: detailed review (text+tags) + report-a-problem'},
+      {t:'missing',i:'ti-cash',x:'MISSING: invoice total inconsistency (₹49/₹69/₹565) — single source of truth'},
+      {t:'end',i:'ti-flag',x:'Payment complete → moves to history'}
+    ]},
+    { id:'u-history', label:'9. History & bills', title:'Booking history & bill details', subtitle:'Past bookings split into completed and cancelled, with detailed bills (including weight-based scrap billing).', stats:[['2','History tabs'],['2','Bill types']], nodes:[
+      {t:'start',i:'ti-history',x:'Booking History (tabs: Completed | Cancelled)'},
+      {t:'decision',i:'ti-eye',x:'Which tab?'},
+      {b:'Completed',n:[{t:'step',i:'ti-check',x:'Completed: name, date, summary, "Completed" + Bill Details'},{t:'step',i:'ti-file-invoice',x:'Bill (service): date, dealer + rating, line items, total'},{t:'step',i:'ti-weight',x:'Bill (scrap): Metal 10kg×₹25, Plastic 12kg×₹16.6, 22kg → ₹450'}]},
+      {b:'Cancelled',n:[{t:'step',i:'ti-x',x:'Cancelled: name, date, summary, badge + "Reason: ..."'}]},
+      {t:'missing',i:'ti-search',x:'MISSING: search/filter by service, date, status'},
+      {t:'missing',i:'ti-repeat',x:'MISSING: "Book again" from a past completed job'},
+      {t:'missing',i:'ti-download',x:'MISSING: download/share past invoices (PDF)'},
+      {t:'missing',i:'ti-star',x:'MISSING: show rating given + rate later'},
+      {t:'end',i:'ti-flag',x:'Read-only record of all bookings'}
+    ]},
+    { id:'u-cancel', label:'10. Cancel', title:'Cancel / decline service', subtitle:'Customer-initiated cancellation with required reason capture, syncing to vendor and platform.', stats:[['4','Cancel reasons'],['2','Screens']], nodes:[
+      {t:'start',i:'ti-x',x:'"Cancel Service" (from tracking) → Cancel screen'},
+      {t:'step',i:'ti-list-check',x:'Reason (REQUIRED): not acceptable / price / unavailable / other'},
+      {t:'step',i:'ti-message',x:'Message (optional, 0/200 chars)'},
+      {t:'decision',i:'ti-click',x:'Confirm Decline or go back?'},
+      {b:'Go back',n:[{t:'step',i:'ti-arrow-back',x:'Return to tracking — service continues'}]},
+      {b:'Confirm Decline',n:[{t:'step',i:'ti-send',x:'POST /api/booking/{id}/cancel → notify technician + platform'},{t:'success',i:'ti-clipboard-check',x:'"Service Cancelled" — summary ARCHIVED'},{t:'step',i:'ti-arrow-back',x:'Back to Dashboard / View History'}]},
+      {t:'missing',i:'ti-coin',x:'MISSING: cancellation policy — fee after dispatch, free window'},
+      {t:'missing',i:'ti-arrow-back-up',x:'MISSING: refund flow if prepaid (timeline + status)'},
+      {t:'missing',i:'ti-arrows-exchange',x:'MISSING: bidirectional sync — show when technician cancels'},
+      {t:'end',i:'ti-flag',x:'Cancelled → Cancelled history with reason'}
+    ]},
+    { id:'u-edge', label:'11. Edge cases', title:'Missing scenarios & edge cases', subtitle:'Critical customer-side flows absent from current Figma designs but essential for production.', stats:[['12','Critical gaps'],['8','Nice-to-haves']], nodes:[
+      {t:'missing',i:'ti-login',x:'AUTH & ONBOARDING: signup/login, society verification, link flat, OTP — entirely absent'},
+      {t:'missing',i:'ti-wifi-off',x:'OFFLINE / NETWORK LOSS: handle drop during booking or payment'},
+      {t:'missing',i:'ti-loader',x:'LOADING / SKELETON: catalog, tracking, history placeholders'},
+      {t:'missing',i:'ti-mood-empty',x:'EMPTY STATES: no bookings, no history, no addresses'},
+      {t:'missing',i:'ti-error-404',x:'ERROR STATES: generic error + retry, gateway/server failures'},
+      {t:'missing',i:'ti-clock-x',x:'BOOKING EXPIRY: abandon mid-flow — cart/booking timeout & recovery'},
+      {t:'missing',i:'ti-bell',x:'NOTIFICATION CENTER: booking updates, offers, society notices'},
+      {t:'missing',i:'ti-message-chatbot',x:'IN-APP SUPPORT: chat, complaint/ticket, FAQ, dispute a charge'},
+      {t:'missing',i:'ti-wallet',x:'WALLET / SAVED PAYMENTS: wallet, saved cards/UPI, auto-pay'},
+      {t:'missing',i:'ti-discount-2',x:'OFFERS & LOYALTY: coupons, referral credits, member discounts, points'},
+      {t:'missing',i:'ti-users',x:'MULTI-SERVICE BOOKING: book AC + Plumber in one session'},
+      {t:'missing',i:'ti-calendar-repeat',x:'RECURRING: subscriptions (monthly AC, weekly housekeeping)'},
+      {t:'missing',i:'ti-user-cog',x:'PROFILE & SETTINGS: edit profile, family, preferences, language'},
+      {t:'missing',i:'ti-accessible',x:'ACCESSIBILITY: screen reader, scaling, contrast, Hindi/Gujarati'},
+      {t:'missing',i:'ti-shield-lock',x:'TRUST & SAFETY: verify ID on arrival, SOS, share trip'},
+      {t:'missing',i:'ti-star-half',x:'POST-SERVICE: warranty claims, re-service, report poor work'},
+      {t:'missing',i:'ti-photo-up',x:'COMPLAINT WITH EVIDENCE: upload photos when disputing'},
+      {t:'missing',i:'ti-versions',x:'APP UPDATE: force update / soft prompt'},
+      {t:'missing',i:'ti-map-pin-off',x:'OUT OF COVERAGE: graceful handling when no vendors available'},
+      {t:'missing',i:'ti-clipboard-data',x:'SPEND ANALYTICS: monthly home-service spend, tied to Expense module'}
+    ]}
+  ]
+};
+
+const E2E = {
+  hero: { title:['End-to-end ','swimlane'], desc:'How the customer, platform backend, and vendor interact across the full service lifecycle. The platform is the synchronization spine — matching, status sync, invoice reconciliation, and settlement. Dashed boxes are new/changed from reconciliation.', meta:[['8','Phases'],['3','Actors'],['11','New / changed steps']] },
+  lanes: [['cust','Customer (resident)','ti-user'],['plat','Platform / backend','ti-server-2'],['vend','Vendor (technician)','ti-tools']],
+  phases: [
+    { num:1, name:'Service discovery & booking', steps:[
+      {lane:'cust',id:'C1',title:'Open society app',desc:'Dashboard → Home Services'},
+      {lane:'cust',id:'C2',title:'Choose booking mode',desc:'Instant (2–4 hrs) OR Schedule',dec:true},
+      {lane:'cust',id:'C3',title:'Browse service catalog',desc:'Add items to cart with prices',handoff:'Catalog & prices come from vendor "Key Skills & Pricing"'},
+      {lane:'cust',id:'C4',title:'Select / add address',desc:'Saved or current location'},
+      {lane:'cust',id:'C5',title:'Confirm booking',desc:'Review total → "Booking Confirmed!"'},
+      {lane:'plat',id:'P1',title:'Create booking record',desc:'Persist, apply society discount, gen ID',isnew:true}
+    ]},
+    { num:2, name:'Matching & assignment', steps:[
+      {lane:'plat',id:'P2',title:'Run matching engine',desc:'Scan online vendors by service + geo',dec:true},
+      {lane:'cust',id:'C6',title:'See "Finding an expert"',desc:'Live radar scan while matching runs'},
+      {lane:'plat',id:'P3',title:'Dispatch instant request',desc:'Push to nearest vendor(s), 60s window',handoff:'Becomes vendor 60s "Instant Request"'},
+      {lane:'vend',id:'V1',title:'Receive instant request',desc:'60s countdown: customer, slot, address',dec:true},
+      {lane:'vend',id:'V2',title:'Accept or decline',desc:'Accept → assigned. Decline/timeout → reassign',dec:true},
+      {lane:'plat',id:'P4',title:'Confirm assignment',desc:'Lock vendor, notify both, open chat'},
+      {lane:'cust',id:'C7',title:'"Technician Assigned!"',desc:'Profile, rating, ETA, Contact / Track'}
+    ]},
+    { num:3, name:'Scheduling confirmation', steps:[
+      {lane:'vend',id:'V3',title:'Confirm schedule',desc:'Vendor accepts the time slot',isnew:true,handoff:'NEW — matches customer "Technician Scheduled" state'},
+      {lane:'plat',id:'P5',title:'Sync status',desc:'Broadcast "Scheduled" to both apps',isnew:true},
+      {lane:'cust',id:'C8',title:'Tracker updates',desc:'Confirmed → Assigned → Scheduled'}
+    ]},
+    { num:4, name:'En route & arrival', steps:[
+      {lane:'vend',id:'V4',title:'Navigate to customer',desc:'Route, ETA, Maps, live GPS shared'},
+      {lane:'plat',id:'P6',title:'Stream live location',desc:'Relay vendor GPS → customer tracker',isnew:true},
+      {lane:'cust',id:'C9',title:'Track technician',desc:'"On the way" → Navigate, live ETA'},
+      {lane:'vend',id:'V5',title:'Mark as arrived',desc:'Geo-fence check (within 200m)',isnew:true},
+      {lane:'cust',id:'C10',title:'"Technician arrived"',desc:'Tracker shows arrival'}
+    ]},
+    { num:5, name:'Service execution', steps:[
+      {lane:'vend',id:'V6',title:'Start service',desc:'Timer starts, status → In Progress'},
+      {lane:'cust',id:'C11',title:'"Service in progress"',desc:'Live status, technician working'},
+      {lane:'vend',id:'V7',title:'Add extra services',desc:'Gas, filters, parts — adjusts invoice'},
+      {lane:'vend',id:'V8',title:'Capture proof of work',desc:'Before/after photos + OTP/signature',isnew:true},
+      {lane:'vend',id:'V9',title:'Mark as completed',desc:'Stop timer, generate invoice'},
+      {lane:'plat',id:'P7',title:'Reconcile invoice',desc:'Apply discount + commission, sync both',isnew:true,handoff:'Fixes vendor↔customer invoice mismatch'}
+    ]},
+    { num:6, name:'Billing & payment', steps:[
+      {lane:'cust',id:'C12',title:'"Job Done!" + invoice',desc:'Base + parts − society discount'},
+      {lane:'cust',id:'C13',title:'Choose payment',desc:'UPI or Cash on Delivery',dec:true},
+      {lane:'plat',id:'P8',title:'Process payment',desc:'UPI → gateway. Cash → mark collected',dec:true},
+      {lane:'vend',id:'V10',title:'Confirm collection',desc:'Cash: "Confirm Collected"; UPI: auto'},
+      {lane:'cust',id:'C14',title:'Payment successful',desc:'TXN ID, status, Download Receipt'},
+      {lane:'plat',id:'P9',title:'Credit vendor wallet',desc:'Amount + tip − commission → balance',isnew:true}
+    ]},
+    { num:7, name:'Rating & settlement', steps:[
+      {lane:'cust',id:'C15',title:'Rate & tip',desc:'1–5 stars, tip/compliment'},
+      {lane:'plat',id:'P10',title:'Store rating, route tip',desc:'Update avg; tip → vendor wallet',isnew:true},
+      {lane:'vend',id:'V11',title:'View rating received',desc:'Stars, review & tip on completed job',isnew:true,handoff:'NEW vendor screen — was missing'},
+      {lane:'vend',id:'V12',title:'Withdraw earnings',desc:'Wallet → bank, 7-day rule, ~30 min'},
+      {lane:'plat',id:'P11',title:'Settle to bank',desc:'Transfer, generate GST statement',isnew:true},
+      {lane:'cust',id:'C16',title:'Booking in history',desc:'Completed → View Bill / receipt'}
+    ]},
+    { num:8, name:'Cross-cutting: cancellation & exceptions (either side)', steps:[
+      {lane:'cust',id:'X1',title:'Customer cancels',desc:'Cancel → reason → confirm',dec:true},
+      {lane:'plat',id:'X2',title:'Bidirectional sync',desc:'Notify other party, penalty/refund, log',isnew:true},
+      {lane:'vend',id:'X3',title:'Vendor cancels / reports',desc:'Cancel or Report Issue → reason'}
+    ]}
+  ]
+};
+
+/* ============ DEEP-DIVE SEQUENCE DIAGRAMS ============ */
+const SEQ = {
+  hero: { title:['Deep-dive ','sequence flows'], desc:'One level deeper than the swimlane — message-by-message sequence diagrams for each phase of the lifecycle, including every branch: matching windows, retries, idempotency, webhooks, geo-fencing, state-machine guards, and failure paths. Each diagram is paired with its technical contract (endpoints, real-time events, state transitions, and edge cases).', meta:[['10','Deep-dive flows'],['3-tier','Actors + services'],['Mermaid','Live sequence diagrams']] },
+  sections: [
+    {
+      id:'s-booking', label:'1. Booking creation', title:'Booking creation (instant vs scheduled fork)',
+      subtitle:'Catalog browse → cart build → the mode fork that drives everything downstream. Pricing is sourced from the vendor "Key Skills & Pricing", and the write is idempotent.',
+      mer:`sequenceDiagram
+    autonumber
+    actor C as Customer App
+    participant GW as API Gateway
+    participant BK as Booking Service
+    participant CAT as Catalog / Pricing
+    participant DB as Postgres
+    participant Q as Event Bus
+    C->>GW: GET /catalog?service=ac&geo=lat,lng
+    GW->>CAT: Resolve services + vendor pricing in radius
+    CAT-->>C: Items, base/visiting charge, ratings
+    C->>C: Build cart (add / remove line items)
+    Note over C: Pick mode — Instant (2-4 hrs) vs Scheduled
+    alt Scheduled
+        C->>GW: POST /booking {mode:scheduled, slot, addressId, items, Idempotency-Key}
+    else Instant
+        C->>GW: POST /booking {mode:instant, addressId, items, Idempotency-Key}
+    end
+    GW->>BK: Create booking
+    BK->>BK: Validate slot + coverage, recompute price, apply society discount
+    BK->>DB: INSERT booking (status = CREATED)
+    BK->>Q: Publish BookingCreated
+    BK-->>C: 201 {bookingId, status, total}
+    opt mode = instant
+        Q-->>BK: Trigger matching pipeline (see flow 2)
+    end`,
+      spec:{
+        endpoints:['<span class="mth get">GET</span><code>/catalog</code> — services + live vendor pricing by geo','<span class="mth post">POST</span><code>/booking</code> — idempotent create (requires <code>Idempotency-Key</code>)','<span class="mth get">GET</span><code>/address</code> — saved locations + coverage flag'],
+        events:['<span class="mth evt">EVT</span><code>BookingCreated</code> → fans out to matching + notifications','<span class="mth evt">EVT</span><code>society.discount.applied</code> (audit)'],
+        states:['<code>—</code> → <code>CREATED</code> on successful persist','Scheduled stays <code>CREATED</code> until vendor confirms slot','Instant transitions immediately into the matching pipeline'],
+        edge:['Duplicate submit (double-tap / retry) → same <code>Idempotency-Key</code> returns the original booking','Address outside coverage → 422 with "no vendors in area"','Price drift between catalog view and submit → server recomputes, client re-confirms total']
+      }
+    },
+    {
+      id:'s-matching', label:'2. Matching', title:'Matching engine & dispatch (60s window)',
+      subtitle:'The instant path: rank online vendors by distance / rating / accept-rate, dispatch with a 60-second window, and handle decline, timeout, radius exhaustion, and "no experts available".',
+      mer:`sequenceDiagram
+    autonumber
+    participant Q as Event Bus
+    participant M as Matching Service
+    participant GEO as Geo Index (Redis)
+    participant N as Notify (WS / FCM)
+    actor C as Customer App
+    actor V as Vendor App
+    participant DB as Postgres
+    Q->>M: BookingCreated (instant)
+    C->>N: Subscribe booking:{id} (WS)
+    N-->>C: "Finding an expert" radar scan
+    M->>GEO: Query online vendors by service + radius
+    GEO-->>M: Ranked list (distance, rating, accept-rate)
+    loop Per candidate / batch — 60s window each
+        M->>N: Dispatch InstantRequest
+        N-->>V: 60s countdown card (customer, slot, address)
+        alt Vendor accepts
+            V->>M: POST /request/{id}/accept
+            M->>DB: Lock assignment (optimistic, status = ASSIGNED)
+            M->>N: Notify both + open chat channel
+            N-->>C: "Technician Assigned!" profile + ETA
+            N-->>V: Job moves to Ongoing
+        else Decline or 60s timeout
+            M->>DB: Log decline / timeout + metrics
+            Note over M: Reassign to next candidate
+        end
+    end
+    opt All candidates exhausted
+        M->>GEO: Expand radius + retry
+        Note over M,C: If still none → "No experts available" (retry / schedule)
+    end`,
+      spec:{
+        endpoints:['<span class="mth post">POST</span><code>/request/{id}/accept</code> — vendor claims the job','<span class="mth post">POST</span><code>/request/{id}/decline</code> — frees the candidate','<span class="mth ws">WS</span><code>booking:{id}</code> — customer matching channel'],
+        events:['<span class="mth evt">EVT</span><code>InstantRequestDispatched</code> (per candidate)','<span class="mth evt">EVT</span><code>VendorAssigned</code> / <code>MatchTimeout</code> / <code>NoVendorFound</code>'],
+        states:['<code>CREATED</code> → <code>MATCHING</code> → <code>ASSIGNED</code>','Concurrent accepts resolved by optimistic lock — first writer wins, loser gets 409','<code>MATCHING</code> → <code>UNFULFILLED</code> on radius exhaustion'],
+        edge:['Two vendors accept same job → DB row-version guard; second sees "already taken"','Vendor accepts at the 59s mark vs server clock → server timestamp is authoritative','High decline / timeout vendors are deprioritized in ranking']
+      }
+    },
+    {
+      id:'s-sync', label:'3. Status sync', title:'Scheduling confirmation & status state-machine',
+      subtitle:'How a status change propagates: a guarded state-machine transition, persisted with a version bump, then fanned out to both apps in parallel so the trackers never diverge.',
+      mer:`sequenceDiagram
+    autonumber
+    actor V as Vendor App
+    participant GW as API Gateway
+    participant BK as Booking Service
+    participant ST as State Machine
+    participant N as Notify (WS / FCM)
+    actor C as Customer App
+    Note over V,C: Scheduled bookings — vendor confirms the slot
+    V->>GW: POST /booking/{id}/confirm-schedule
+    GW->>BK: Confirm slot
+    BK->>ST: Transition ASSIGNED -> SCHEDULED
+    ST-->>BK: Allowed + version++ (else reject)
+    BK->>N: Broadcast status = SCHEDULED
+    par Notify customer
+        N-->>C: Tracker: Confirmed -> Assigned -> Scheduled
+    and Notify vendor
+        N-->>V: Upcoming job confirmed
+    end
+    Note over ST: Illegal transitions rejected (e.g. COMPLETED -> SCHEDULED)`,
+      spec:{
+        endpoints:['<span class="mth post">POST</span><code>/booking/{id}/confirm-schedule</code>','<span class="mth get">GET</span><code>/booking/{id}/status</code> — last-known state + version'],
+        events:['<span class="mth evt">EVT</span><code>StatusChanged</code> {from, to, version, ts}','<span class="mth ws">WS</span> fan-out to both <code>booking:{id}</code> subscribers'],
+        states:['Allowed: <code>ASSIGNED → SCHEDULED → ON_THE_WAY → ARRIVED → IN_PROGRESS → COMPLETED</code>','Terminal: <code>COMPLETED</code>, <code>CANCELLED</code>, <code>UNFULFILLED</code>','Every transition bumps a monotonic <code>version</code> for ordering'],
+        edge:['Out-of-order event delivery → client keeps highest <code>version</code> only','Illegal transition attempt → 409 + state machine unchanged','Customer reopens app mid-flow → replays last-known status from server']
+      }
+    },
+    {
+      id:'s-enroute', label:'4. En route', title:'En-route location streaming & geo-fenced arrival',
+      subtitle:'Live GPS relay (battery-aware polling) feeding the customer tracker, plus the geo-fence guard that only allows "Mark as Arrived" within 200m of the address.',
+      mer:`sequenceDiagram
+    autonumber
+    actor V as Vendor App
+    participant GW as API Gateway
+    participant LOC as Location Stream
+    participant N as Notify (WS)
+    actor C as Customer App
+    participant GEO as Geo Service
+    V->>GW: Start navigation (status -> ON_THE_WAY)
+    loop Every 5-10s while en route
+        V->>LOC: Push GPS (lat, lng, heading, speed)
+        LOC->>N: Relay to customer channel
+        N-->>C: Move marker + recompute ETA
+    end
+    Note over V: Battery-aware — reduce polling on low battery
+    V->>GW: Tap "Mark as Arrived"
+    GW->>GEO: Geo-fence check (within 200m of address?)
+    alt Inside fence
+        GEO-->>GW: OK
+        GW->>N: status -> ARRIVED
+        N-->>C: "Technician arrived"
+    else Outside fence
+        GEO-->>V: Blocked — move closer / report wrong address
+    end`,
+      spec:{
+        endpoints:['<span class="mth ws">WS</span><code>location:{bookingId}</code> — vendor → customer relay','<span class="mth post">POST</span><code>/booking/{id}/arrived</code> — geo-fence guarded','<span class="mth post">POST</span><code>/booking/{id}/navigate</code> — opens ON_THE_WAY'],
+        events:['<span class="mth evt">EVT</span><code>LocationUpdate</code> (throttled, last-write-wins)','<span class="mth evt">EVT</span><code>GeofenceEntered</code> / <code>ArrivalBlocked</code>'],
+        states:['<code>SCHEDULED/ASSIGNED → ON_THE_WAY → ARRIVED</code>','ETA recomputed server-side from latest GPS + traffic'],
+        edge:['GPS failure / permission off → fallback to manual + warn customer of delay','Low battery → reduce polling frequency, notify customer','Spoofed location → arrival blocked outside fence + flagged for fraud review']
+      }
+    },
+    {
+      id:'s-execution', label:'5. Execution', title:'Service execution, add-ons & invoice reconciliation',
+      subtitle:'Server-timestamped timer, mid-job add-ons that adjust the invoice, optional proof-of-work, and the single-source-of-truth invoice that fixes the vendor↔customer total mismatch.',
+      mer:`sequenceDiagram
+    autonumber
+    actor V as Vendor App
+    participant GW as API Gateway
+    participant JOB as Job Service
+    participant INV as Invoice Engine
+    participant N as Notify
+    actor C as Customer App
+    V->>GW: Start service (status -> IN_PROGRESS, server ts)
+    GW->>JOB: Start timer
+    N-->>C: "Service in progress"
+    opt Add extra services
+        V->>GW: Add line items (gas, filters, parts)
+        GW->>INV: Recompute subtotal
+        INV-->>V: Updated running total
+    end
+    opt Proof of work (recommended)
+        V->>GW: Upload before/after photos + customer OTP / signature
+    end
+    V->>GW: Mark as completed
+    GW->>INV: Finalize: base + add-ons - discount + tax, commission split
+    INV->>JOB: Persist single source-of-truth invoice
+    JOB->>N: Sync identical invoice to both apps
+    par
+        N-->>C: "Job Done!" — invoice total
+    and
+        N-->>V: Payment collection — same total
+    end
+    Note over INV: Reconciliation removes vendor/customer total drift`,
+      spec:{
+        endpoints:['<span class="mth post">POST</span><code>/booking/{id}/start</code> — server-authoritative timer','<span class="mth post">POST</span><code>/booking/{id}/items</code> — add/adjust line items','<span class="mth post">POST</span><code>/booking/{id}/complete</code> — finalize invoice'],
+        events:['<span class="mth evt">EVT</span><code>InvoiceFinalized</code> — one canonical total','<span class="mth evt">EVT</span><code>ProofOfWorkUploaded</code>'],
+        states:['<code>IN_PROGRESS → COMPLETED</code> only after invoice finalized','Invoice immutable once finalized (adjustments = new line via dispute)'],
+        edge:['Add-on during completion race → invoice locked on "complete", late items rejected','Customer disputes total → freeze → admin review (see flow 8)','Missing proof-of-work → allowed but flagged; configurable as mandatory per service']
+      }
+    },
+    {
+      id:'s-payment', label:'6. Payment', title:'Billing & payment (UPI webhook vs cash)',
+      subtitle:'The UPI gateway path with signed webhook verification and dedupe, the cash/COD path with commission debit, and the idempotency that prevents double-charging on retry.',
+      mer:`sequenceDiagram
+    autonumber
+    actor C as Customer App
+    participant GW as API Gateway
+    participant PAY as Payment Service
+    participant PG as Payment Gateway
+    participant LED as Ledger / Wallet
+    actor V as Vendor App
+    participant N as Notify
+    C->>GW: Choose method (UPI / Cash)
+    alt UPI
+        C->>GW: POST /payment {bookingId, method:UPI, Idempotency-Key}
+        GW->>PAY: Create payment intent
+        PAY->>PG: Init order → QR / collect request
+        PG-->>C: Show QR / app intent
+        C->>PG: Approve in UPI app
+        PG-->>PAY: Webhook PAYMENT_SUCCESS (signed)
+        PAY->>PAY: Verify signature + dedupe by event id
+        PAY->>LED: Record payment, mark PAID
+    else Cash (COD)
+        V->>GW: Confirm cash collected
+        GW->>PAY: Mark PAID (cash) — commission owed by vendor
+        PAY->>LED: Debit vendor wallet for commission
+    end
+    PAY->>N: Broadcast PAID
+    par
+        N-->>C: Payment successful — TXN ID + receipt
+    and
+        N-->>V: Payment received
+    end
+    opt Gateway failure / timeout
+        PG-->>PAY: FAILED / no response
+        PAY-->>C: Retry / switch method / COD fallback
+    end`,
+      spec:{
+        endpoints:['<span class="mth post">POST</span><code>/payment</code> — create intent (idempotent)','<span class="mth post">POST</span><code>/payment/webhook</code> — gateway callback (signed)','<span class="mth post">POST</span><code>/booking/{id}/cash-collected</code> — vendor confirms'],
+        events:['<span class="mth evt">EVT</span><code>PAYMENT_SUCCESS</code> / <code>PAYMENT_FAILED</code> (webhook)','<span class="mth evt">EVT</span><code>PaymentRecorded</code> → triggers wallet credit'],
+        states:['<code>PENDING → PAID</code> (UPI webhook or cash confirm)','<code>PENDING → FAILED → PENDING</code> on retry'],
+        edge:['Webhook replay / duplicate → deduped by gateway <code>event_id</code>','Double submit → <code>Idempotency-Key</code> returns existing intent (no double charge)','Webhook arrives before client redirect → status reconciled on next poll']
+      }
+    },
+    {
+      id:'s-settlement', label:'7. Settlement', title:'Rating, tip routing & wallet settlement',
+      subtitle:'Rating updates the vendor average, tip routes to the wallet, the job credit settles (amount + tip − commission), and withdrawal honors the 7-day rule plus GST statement generation.',
+      mer:`sequenceDiagram
+    autonumber
+    actor C as Customer App
+    participant GW as API Gateway
+    participant RAT as Rating Service
+    participant LED as Ledger / Wallet
+    participant BANK as Payout / Bank Rail
+    actor V as Vendor App
+    participant TAX as GST / Statement
+    C->>GW: Submit rating (1-5) + optional tip
+    GW->>RAT: Store rating, recompute vendor avg
+    opt Tip present
+        RAT->>LED: Credit tip to vendor wallet
+    end
+    RAT-->>V: Rating + review + tip on completed job
+    Note over LED: Job credit = amount + tip - platform commission
+    LED->>LED: Settle (Pending -> Available)
+    V->>GW: Withdraw (amount <= available, 7-day rule)
+    GW->>LED: Check balance + cooldown
+    alt Eligible
+        LED->>BANK: Transfer to bank (IFSC verified)
+        BANK-->>V: Withdrawal successful (~30 min)
+        LED->>TAX: Append to monthly GST statement
+    else Insufficient / within cooldown
+        LED-->>V: Blocked with reason
+    end`,
+      spec:{
+        endpoints:['<span class="mth post">POST</span><code>/rating</code> — stars + tip + review','<span class="mth post">POST</span><code>/wallet/withdraw</code> — bank payout','<span class="mth get">GET</span><code>/wallet/statement?month=</code> — GST export'],
+        events:['<span class="mth evt">EVT</span><code>RatingStored</code> → recompute rolling average','<span class="mth evt">EVT</span><code>WalletCredited</code> / <code>PayoutSettled</code>'],
+        states:['Wallet entry: <code>Pending → Available</code> after settlement window','Withdrawal: <code>Requested → Processing → Completed/Failed</code>'],
+        edge:['Withdraw within 7-day cooldown → blocked with next-eligible date','Amount > available balance → disabled / 422','Payout bounce (wrong IFSC) → auto-reversed to wallet + alert']
+      }
+    },
+    {
+      id:'s-cancel', label:'8. Cancel & dispute', title:'Cancellation, penalty/refund & disputes (bidirectional)',
+      subtitle:'Either side can cancel. The policy engine evaluates the stage (free window vs after-dispatch fee), refunds prepaid amounts, and disputes freeze payment for admin review — all synced both ways.',
+      mer:`sequenceDiagram
+    autonumber
+    actor C as Customer App
+    actor V as Vendor App
+    participant GW as API Gateway
+    participant BK as Booking Service
+    participant POL as Policy Engine
+    participant LED as Ledger
+    participant N as Notify
+    alt Customer cancels
+        C->>GW: POST /booking/{id}/cancel {reason}
+    else Vendor cancels / reports
+        V->>GW: POST /booking/{id}/cancel {reason} or report
+    end
+    GW->>BK: Apply cancellation
+    BK->>POL: Evaluate stage (pre-dispatch / dispatched / in-progress)
+    alt Free window
+        POL-->>BK: No fee
+    else After dispatch
+        POL->>LED: Charge cancellation fee + rating impact
+    end
+    opt Prepaid
+        LED->>LED: Initiate refund (5-7 days)
+    end
+    BK->>N: Bidirectional sync
+    par
+        N-->>C: Status Cancelled (+ refund timeline)
+    and
+        N-->>V: Removed from queue / job cancelled
+    end
+    Note over BK: Vendor cancel triggers auto-reassign. Dispute freezes payment for admin review`,
+      spec:{
+        endpoints:['<span class="mth post">POST</span><code>/booking/{id}/cancel</code> — reason required','<span class="mth post">POST</span><code>/booking/{id}/report</code> — issue + escalation','<span class="mth post">POST</span><code>/dispute</code> — freeze + admin queue'],
+        events:['<span class="mth evt">EVT</span><code>BookingCancelled</code> {by, stage, fee}','<span class="mth evt">EVT</span><code>RefundInitiated</code> / <code>DisputeOpened</code>'],
+        states:['Any non-terminal → <code>CANCELLED</code>','Dispute: <code>COMPLETED → PAYMENT_FROZEN → RESOLVED</code>'],
+        edge:['Both sides cancel near-simultaneously → first write wins, reasons logged','Vendor cancels after dispatch → auto-reassign + customer notified','Unresolved report > 15 min → auto-escalate to support']
+      }
+    },
+    {
+      id:'s-realtime', label:'9. Real-time channel', title:'Cross-cutting: real-time delivery (WS + FCM fallback)',
+      subtitle:'The transport beneath every tracker: authenticated WebSocket with heartbeat, last-known-state replay, push fallback when backgrounded, and at-least-once delivery with client-side dedupe.',
+      mer:`sequenceDiagram
+    autonumber
+    actor APP as Client (Customer / Vendor)
+    participant WS as WebSocket Gateway
+    participant PUB as Pub/Sub
+    participant FCM as Push (FCM / APNs)
+    APP->>WS: Connect (JWT) + subscribe booking:{id}
+    WS-->>APP: Connected — replay last-known status
+    loop Heartbeat every 30s
+        APP->>WS: ping
+        WS-->>APP: pong
+    end
+    PUB->>WS: status / location event
+    WS-->>APP: Live update
+    alt Socket dropped / app backgrounded
+        PUB->>FCM: Send push notification
+        FCM-->>APP: Deep-link notification
+        APP->>WS: Reconnect + resync (since lastEventId)
+    end
+    Note over WS: At-least-once delivery, ordered per booking, client dedupes by eventId`,
+      spec:{
+        endpoints:['<span class="mth ws">WS</span><code>/realtime</code> — auth via short-lived JWT','<span class="mth post">POST</span><code>/device/token</code> — register FCM/APNs token','<span class="mth get">GET</span><code>/booking/{id}/events?since=</code> — replay/backfill'],
+        events:['<span class="mth evt">EVT</span><code>StatusChanged</code>, <code>LocationUpdate</code>, <code>ChatMessage</code>','<span class="mth ws">WS</span> <code>ping/pong</code> heartbeat (30s)'],
+        states:['Connection: <code>Connecting → Connected → Dropped → Reconnecting</code>','Per-booking ordered stream keyed by <code>eventId</code>'],
+        edge:['Socket drop → push fallback + resync from <code>lastEventId</code>','Duplicate delivery → client dedupes by <code>eventId</code>','Token expiry mid-session → silent refresh + re-auth socket']
+      }
+    },
+    {
+      id:'s-auth', label:'10. Auth & session', title:'Cross-cutting: auth, OTP & society verification',
+      subtitle:'The currently-missing entry flow: phone/email OTP (cooldown + lockout), resident-to-flat linking with admin approval, and silent token refresh on 401.',
+      mer:`sequenceDiagram
+    autonumber
+    actor U as User
+    participant APP as App
+    participant AUTH as Auth Service
+    participant OTP as OTP Provider
+    participant SOC as Society Directory
+    participant GW as API Gateway
+    U->>APP: Enter phone / email
+    APP->>AUTH: Request OTP
+    AUTH->>OTP: Send code (30s cooldown, max 3)
+    OTP-->>U: SMS code
+    U->>APP: Enter OTP
+    APP->>AUTH: Verify
+    alt Valid
+        AUTH-->>APP: Access token (short) + refresh token
+    else Invalid / expired
+        AUTH-->>APP: Error — resend / lockout after max attempts
+    end
+    opt Resident verification
+        APP->>SOC: Link flat (society, tower, unit)
+        SOC-->>APP: Pending admin approval / verified
+    end
+    Note over APP,GW: On 401 the app silently refreshes and retries. Expired refresh forces re-login
+    APP->>GW: API call with Bearer token
+    GW-->>APP: 200 (or 401 -> refresh -> retry)`,
+      spec:{
+        endpoints:['<span class="mth post">POST</span><code>/auth/otp</code> — request code','<span class="mth post">POST</span><code>/auth/verify</code> — exchange OTP for tokens','<span class="mth post">POST</span><code>/auth/refresh</code> — rotate access token','<span class="mth post">POST</span><code>/society/link-flat</code> — resident verification'],
+        events:['<span class="mth evt">EVT</span><code>OtpSent</code> / <code>OtpVerified</code> / <code>OtpLocked</code>','<span class="mth evt">EVT</span><code>FlatLinkRequested</code> → admin approval queue'],
+        states:['<code>Anonymous → OtpPending → Authenticated</code>','Flat link: <code>Unlinked → Pending → Verified/Rejected</code>'],
+        edge:['Max OTP attempts → 30-min account lockout','Refresh token expired → force re-login','Flat already claimed → conflict → manual admin resolution']
+      }
+    }
+  ]
+};
+
+/* ============ WHOLE-SYSTEM WORKFLOW ============ */
+const WORKFLOW = {
+  hero: { title:['Complete ','journey workflow'], desc:'The end-to-end journey as decision flowcharts — kept separate for each actor. The User flow covers the customer from opening the app to receipt; the Vendor flow covers the technician from going online to bank payout. Every diamond is a yes/no decision: one branch if yes, the other if no.', meta:[['2','Separate flows'],['User + Vendor','Per-actor journey'],['Start→End','Full path']] },
+  sections: [
+    {
+      id:'w-user', label:'User flow', title:'User (customer) journey — yes / no decisions',
+      subtitle:'The customer side from opening the app to receipt: browse, choose instant vs scheduled, get matched, track, pay, and rate. Failure and cancellation paths exit cleanly.',
+      mer:`flowchart TD
+    START([Open app]):::term --> B[Browse catalog and build cart]:::cust
+    B --> C{Instant or scheduled?}:::dec
+    C -->|Scheduled| D[Pick date and time slot]:::cust
+    C -->|Instant| E[Confirm instant booking]:::cust
+    D --> F[Confirm booking]:::cust
+    E --> F
+    F --> G[Booking created, finding an expert]:::cust
+    G --> H{Technician assigned in time?}:::dec
+    H -->|No| K[No experts available, retry or schedule]:::cust
+    K --> ENDU([End: booking not fulfilled]):::term
+    H -->|Yes| O[Technician assigned, view profile and ETA]:::cust
+    O --> P[Track technician live, contact or chat]:::cust
+    P --> CX{Cancel service?}:::dec
+    CX -->|Yes| CY[Choose reason, confirm cancel]:::cust
+    CY --> CZ[Refund per policy if prepaid]:::cust
+    CZ --> ENDC([End: cancelled]):::term
+    CX -->|No| T[Technician arrives, service in progress]:::cust
+    T --> W[Job done, review invoice]:::cust
+    W --> Y{Payment method?}:::dec
+    Y -->|UPI| AA[Pay via UPI app]:::cust
+    AA --> AB{Gateway success?}:::dec
+    AB -->|No| AC[Retry, switch method or COD]:::cust
+    AC --> Y
+    AB -->|Yes| AD[Payment successful, TXN ID]:::cust
+    Y -->|Cash| AE[Pay cash to technician]:::cust
+    AE --> AD
+    AD --> AF[Rate service plus optional tip]:::cust
+    AF --> AG[Download receipt, booking in history]:::cust
+    AG --> ENDF([End: journey complete]):::term
+    classDef dec fill:#faeeda,stroke:#ef9f27,color:#633806;
+    classDef cust fill:#e6f1fb,stroke:#85b7eb,color:#0c447c;
+    classDef term fill:#dce9f7,stroke:#5a93cf,color:#0c447c;`,
+      cards:[
+        {icon:'ti-user', title:'Customer steps', items:['Browse → cart → choose <b>instant vs scheduled</b>','Get matched, then <b>track the technician</b> live','Pay UPI or cash, then rate + optional tip']},
+        {icon:'ti-git-branch', title:'Key yes / no forks', items:['Technician assigned in time? → track or fail gracefully','Cancel service? → reason + refund or continue','Gateway success? → success or retry / COD fallback']},
+        {icon:'ti-arrow-guide', title:'Exit points', items:['<b>Not fulfilled</b> — no expert available','<b>Cancelled</b> — reason captured, refund if prepaid','<b>Complete</b> — receipt + booking in history']}
+      ]
+    },
+    {
+      id:'w-vendor', label:'Vendor flow', title:'Vendor (technician) journey — yes / no decisions',
+      subtitle:'The technician side from going online to bank payout: receive the 60s request, accept, navigate with a geo-fenced arrival, execute, collect payment, and withdraw earnings.',
+      mer:`flowchart TD
+    START([Open app]):::term --> ON{Go online?}:::dec
+    ON -->|No| OFF[Offline, no new requests]:::vend
+    OFF --> ON
+    ON -->|Yes| LISTEN[Online, listening for requests]:::vend
+    LISTEN --> REQ[Instant request, 60s countdown]:::vend
+    REQ --> M{Accept within 60s?}:::dec
+    M -->|No: decline or timeout| N[Reassigned, removed from queue]:::vend
+    N --> LISTEN
+    M -->|Yes| O[Job assigned, Ongoing Service]:::vend
+    O --> P[Navigate to customer, share live GPS]:::vend
+    P --> Q{Within 200m geo-fence?}:::dec
+    Q -->|No| R[Move closer or report wrong address]:::vend
+    R --> Q
+    Q -->|Yes| S[Mark arrived, start service and timer]:::vend
+    S --> T[Service in progress]:::vend
+    T --> U{Add extra services?}:::dec
+    U -->|Yes| V[Add line items, recompute invoice]:::vend
+    U -->|No| W[Mark as completed]:::vend
+    V --> W
+    W --> X[Generate invoice, collect payment]:::vend
+    X --> Y{Payment method?}:::dec
+    Y -->|Cash| AE[Confirm cash collected, commission deducted]:::vend
+    Y -->|UPI| AU[Customer pays UPI, auto confirmed]:::vend
+    AE --> AD[Payment received]:::vend
+    AU --> AD
+    AD --> AG[Wallet credited, amount plus tip minus commission]:::vend
+    AG --> RT[View rating and review received]:::vend
+    RT --> AH{Withdraw now? 7-day rule and balance ok?}:::dec
+    AH -->|No| AI[Blocked, show next eligible date]:::vend
+    AI --> ENDW([End: funds held in wallet]):::term
+    AH -->|Yes| AK[Bank payout ~30 min plus GST statement]:::vend
+    AK --> ENDF([End: earnings settled]):::term
+    classDef dec fill:#faeeda,stroke:#ef9f27,color:#633806;
+    classDef vend fill:#e1f5ee,stroke:#5dcaa5,color:#0f6e56;
+    classDef term fill:#dcefe6,stroke:#3fab84,color:#0f6e56;`,
+      cards:[
+        {icon:'ti-tools', title:'Vendor steps', items:['Go online → receive 60s instant request','<b>Accept</b>, navigate, geo-fenced arrival, start service','Complete, collect payment, then withdraw earnings']},
+        {icon:'ti-git-branch', title:'Key yes / no forks', items:['Go online? → listen or stay offline','Accept within 60s? → assign or reassigned','Withdraw eligible? → bank payout or blocked']},
+        {icon:'ti-arrow-guide', title:'Exit points', items:['<b>Reassigned</b> — declined or timed out (loops back)','<b>Funds in wallet</b> — within 7-day cooldown','<b>Settled</b> — payout to bank + GST statement']}
+      ]
+    }
+  ]
+};
+
+/* ============ SLOT BOOKING & VENDOR DISPATCH ============ */
+const DISPATCH = {
+  hero: { title:['Slot booking ','& vendor dispatch'], desc:'One journey, shown for easy review: a resident books a service for a time slot, the platform sends the request to the vendors serving that area, a vendor accepts, and the booking flips to "Technician Assigned". The same path is given as an end-to-end swimlane and as a yes/no workflow, plus the edge cases scoped for the next iteration.', meta:[['3','Review lenses'],['Slot · Service · Area','Routing keys'],['Next iteration','Edge cases scoped']] },
+  note:'This view tracks a single journey — book a service for a time slot, route the request to vendors in that area, a vendor accepts, status becomes Technician Assigned. Use <b>End-to-end</b> and <b>Workflow</b> to review the happy path; the <b>Edge cases</b> tab lists what we will build next. Diagrams adapt to the light/dark theme.',
+  e2e: {
+    title:'End-to-end slot booking & dispatch',
+    subtitle:'The full path anyone can follow at a glance, across the three actors: the resident books a slot, the platform routes the request to vendors serving that area in that slot, a vendor accepts, and the status flips to Technician Assigned.',
+    lanes: [['cust','Customer (resident)','ti-user'],['plat','Platform / backend','ti-server-2'],['vend','Vendor (technician)','ti-tools']],
+    phases: [
+      { num:1, name:'Book a service for a time slot', steps:[
+        {lane:'cust',id:'C1',title:'Open app, pick service',desc:'AC Repair, Plumber, Electrician, Housekeeping…'},
+        {lane:'cust',id:'C2',title:'Select date & time slot',desc:'e.g. Tomorrow · 10 AM – 02 PM',dec:true},
+        {lane:'cust',id:'C3',title:'Confirm address',desc:'Saved or current location → resolves the service area'},
+        {lane:'cust',id:'C4',title:'Confirm booking',desc:'Review items + slot → tap "Book"'},
+        {lane:'plat',id:'P1',title:'Create booking',desc:'Status = REQUESTED · resolve area from address',handoff:'Slot + service + area become the routing keys'}
+      ]},
+      { num:2, name:'Send request to matching vendors', steps:[
+        {lane:'plat',id:'P2',title:'Find matching vendors',desc:'Offer this service · serve this area · free in this slot',dec:true},
+        {lane:'plat',id:'P3',title:'Send request to vendors',desc:'Notify every matching vendor with the slot details',handoff:'Becomes the vendor request card'},
+        {lane:'cust',id:'C5',title:'"Finding a technician"',desc:'Request sent — waiting for a vendor to accept'},
+        {lane:'vend',id:'V1',title:'Receive slot request',desc:'Service, date + slot, area, address, pay'}
+      ]},
+      { num:3, name:'Vendor accepts the request', steps:[
+        {lane:'vend',id:'V2',title:'Review & Accept',desc:'Vendor taps Accept on the request card',dec:true},
+        {lane:'plat',id:'P4',title:'Lock vendor to the slot',desc:'First accept wins → blocks double-booking'},
+        {lane:'plat',id:'P5',title:'Update status → Assigned',desc:'Booking status = TECHNICIAN ASSIGNED',handoff:'Single source of truth, synced to both apps'},
+        {lane:'vend',id:'V3',title:'Job added to Scheduled',desc:'Appears under Today / Tomorrow / This Week'}
+      ]},
+      { num:4, name:'Confirmation & reminders', steps:[
+        {lane:'cust',id:'C6',title:'"Technician Assigned!"',desc:'Vendor name, rating, ETA window'},
+        {lane:'plat',id:'P6',title:'Notify both + arm reminders',desc:'Reminders before the slot starts'},
+        {lane:'vend',id:'V4',title:'Day-of reminder → start',desc:'At slot time → navigate to the customer'},
+        {lane:'cust',id:'C7',title:'Live tracker',desc:'Confirmed → Assigned → On the way → In progress',handoff:'Hands off to the existing job lifecycle'}
+      ]}
+    ]
+  },
+  flow: {
+    title:'Workflow — yes / no decisions',
+    subtitle:'The same journey as a decision flowchart. Every diamond is a yes/no fork: one branch if yes, the other if no — from booking a slot through to the status changing to Technician Assigned.',
+    mer:`flowchart TD
+    START([Open app, pick service]):::term --> A[Select date and time slot]:::cust
+    A --> B[Confirm address and book]:::cust
+    B --> C[Platform creates booking, resolves area]:::plat
+    C --> D{Matching vendors in area for this slot?}:::dec
+    D -->|No| E[No technician available, suggest another slot]:::plat
+    E --> ENDX([End: not fulfilled, rebook]):::term
+    D -->|Yes| F[Send request to matching vendors]:::plat
+    F --> G{Any vendor accepts in time?}:::dec
+    G -->|No: decline or timeout| H[Re-send to others or widen area]:::plat
+    H --> D
+    G -->|Yes| I[Lock vendor to slot, first accept wins]:::plat
+    I --> J[Status changes to Technician Assigned]:::plat
+    J --> K[Customer sees vendor, rating and ETA]:::cust
+    K --> L[Reminders, then service at slot time]:::vend
+    L --> ENDF([End: technician assigned]):::term
+    classDef dec fill:#faeeda,stroke:#ef9f27,color:#633806;
+    classDef cust fill:#e6f1fb,stroke:#85b7eb,color:#0c447c;
+    classDef plat fill:#eeedfe,stroke:#afa9ec,color:#3c3489;
+    classDef vend fill:#e1f5ee,stroke:#5dcaa5,color:#0f6e56;
+    classDef term fill:#dce9f7,stroke:#5a93cf,color:#0c447c;`,
+    cards:[
+      {icon:'ti-user', title:'How it flows', items:['Book a <b>service + time slot</b> + address','Platform routes the request to <b>vendors in that area</b> free in that slot','A vendor accepts → status becomes <b>Technician Assigned</b>']},
+      {icon:'ti-git-branch', title:'Key yes / no forks', items:['Matching vendors in area for this slot? → send the request or suggest another slot','Any vendor accepts in time? → assign or re-send to others','First accept wins → slot locked, no double-booking']},
+      {icon:'ti-arrow-guide', title:'Exit points', items:['<b>Not fulfilled</b> — no vendor for that slot, customer rebooks','<b>Assigned</b> — technician confirmed for the slot','Then → reminders and the live job lifecycle']}
+    ]
+  },
+  edge: {
+    title:'Edge cases — to cover in the next iteration',
+    subtitle:'Scenarios the happy path above does not yet handle. These are deliberately deferred and listed here so they are scoped and built in the next iteration, not forgotten.',
+    nodes:[
+      {t:'missing',i:'ti-user-off',x:'NO VENDOR FOR THE SLOT: suggest nearest open slots, join a waitlist, or widen the area'},
+      {t:'missing',i:'ti-clock-x',x:'ALL VENDORS DECLINE / TIMEOUT: re-send to the next batch, then fall back to suggest-another-slot'},
+      {t:'missing',i:'ti-arrows-double-sw-ne',x:'TWO VENDORS ACCEPT AT ONCE: first accept wins, slot lock blocks the rest (the loser sees "already taken")'},
+      {t:'missing',i:'ti-calendar-x',x:'VENDOR CANCELS BEFORE THE SLOT: auto-reassign to another vendor, keep the slot reserved'},
+      {t:'missing',i:'ti-user-x',x:'VENDOR NO-SHOW ON THE DAY: reassign if time permits, else cancel + refund + reliability penalty'},
+      {t:'missing',i:'ti-toggle-left',x:'VENDOR TURNS OFF THE SLOT AFTER REQUEST SENT: invalidate that offer, drop them from the pool'},
+      {t:'missing',i:'ti-calendar-event',x:'CUSTOMER RESCHEDULES A CONFIRMED BOOKING: release the old slot, re-dispatch for the new one'},
+      {t:'missing',i:'ti-bolt',x:'SLOT STARTS VERY SOON: route through instant 60s matching instead of the scheduled broadcast'},
+      {t:'missing',i:'ti-map-pin-off',x:'ADDRESS OUTSIDE EVERY SERVICE AREA: show "no coverage", do not send a request'},
+      {t:'missing',i:'ti-stack-2',x:'VENDOR CAPACITY REACHED MID-DISPATCH: re-check availability before assigning'},
+      {t:'missing',i:'ti-clock-hour-4',x:'ACCEPTANCE WINDOW / TIMEOUT: how long a vendor has to accept before the request moves on'},
+      {t:'missing',i:'ti-ruler-2',x:'LEAD-TIME & HORIZON RULES: cannot book in the past or too far out; minimum notice before a slot'},
+      {t:'missing',i:'ti-bell',x:'REMINDERS & CHECK-IN: pre-slot reminders, day-of confirmation, late-arrival auto-notify'},
+      {t:'missing',i:'ti-users',x:'MULTI-SERVICE BOOKING: needs more than one vendor → split the request or assign a multi-skill vendor'}
+    ]
+  }
+};
+
+/* ============ RENDER ============ */
+function esc(s){ return s; }
+
+function renderLegend(){
+  return '<div class="legend">' + LEGEND.map(l =>
+    `<span><span class="ldot" style="background:${l[2]};border-color:${l[3]}"></span>${l[1]}</span>`
+  ).join('') + '</div>';
+}
+
+function renderNode(node){
+  if(node.b){
+    let h = `<div class="branch"><div class="branch-lbl">${node.b}</div>`;
+    node.n.forEach(n => { h += renderNode(n); });
+    return h + '</div>';
+  }
+  return `<div class="arrow"></div><div class="node ${node.t}"><i class="ti ${node.i} ni" aria-hidden="true"></i><span>${node.x}</span></div>`;
+}
+
+function renderFlowView(data, viewId){
+  let h = `<div class="view-hero"><h1>${data.hero.title[0]}<span class="em">${data.hero.title[1]}</span></h1><p>${data.hero.desc}</p>`;
+  h += '<div class="hero-meta">' + data.hero.meta.map(m => `<div><span class="num">${m[0]}</span><span class="lbl">${m[1]}</span></div>`).join('') + '</div></div>';
+  h += `<div class="mod-tabs" data-tabs="${viewId}">`;
+  data.sections.forEach((s,i) => { h += `<button class="mod-tab${i===0?' active':''}" data-mod="${s.id}">${s.label}</button>`; });
+  h += '</div>';
+  h += renderLegend();
+  data.sections.forEach((s,i) => {
+    h += `<div class="mod${i===0?' active':''}" id="mod-${s.id}">`;
+    h += `<div class="mod-head"><h2>${s.title}</h2><p>${s.subtitle}</p></div>`;
+    h += '<div class="mod-stats">' + s.stats.map(st => `<div class="mod-stat"><div class="v">${st[0]}</div><div class="l">${st[1]}</div></div>`).join('') + '</div>';
+    h += '<div class="flow">';
+    s.nodes.forEach(n => { h += renderNode(n); });
+    h += '</div></div>';
+  });
+  return h;
+}
+
+function renderSwimlane(d){
+  let h = '<div class="lane-head">' + d.lanes.map(l => `<div class="lane-title lane-${l[0]}"><i class="ti ${l[2]}"></i>${l[1]}</div>`).join('') + '</div>';
+  d.phases.forEach(p => {
+    h += `<div class="phase-band"><span class="phase-num">${p.num}</span>${p.name}</div>`;
+    p.steps.forEach((s,i) => {
+      const cells = {cust:'',plat:'',vend:''};
+      let cls = `act ${s.lane}${s.dec?' dec':''}${s.isnew?' isnew':''}`;
+      let inner = `<span class="act-t"><span class="act-id">${s.id}</span>${s.title}${s.isnew?'<span class="act-tag">new</span>':''}</span><span class="act-d">${s.desc}</span>`;
+      if(s.handoff) inner += `<div class="handoff"><i class="ti ti-arrows-exchange"></i><span>${s.handoff}</span></div>`;
+      cells[s.lane] = `<div class="${cls}">${inner}</div>`;
+      h += `<div class="lane-row"><div class="lane-cell">${cells.cust}</div><div class="lane-cell">${cells.plat}</div><div class="lane-cell">${cells.vend}</div></div>`;
+      if(i < p.steps.length-1) h += '<div class="lane-flow"><i class="ti ti-chevron-down"></i></div>';
+    });
+  });
+  return h;
+}
+
+function renderE2E(){
+  const d = E2E;
+  let h = `<div class="view-hero"><h1>${d.hero.title[0]}<span class="em">${d.hero.title[1]}</span></h1><p>${d.hero.desc}</p>`;
+  h += '<div class="hero-meta">' + d.hero.meta.map(m => `<div><span class="num">${m[0]}</span><span class="lbl">${m[1]}</span></div>`).join('') + '</div></div>';
+  h += renderSwimlane(d);
+  return h;
+}
+
+function renderDispatch(){
+  const d = DISPATCH;
+  let h = `<div class="view-hero"><h1>${d.hero.title[0]}<span class="em">${d.hero.title[1]}</span></h1><p>${d.hero.desc}</p>`;
+  h += '<div class="hero-meta">' + d.hero.meta.map(m => `<div><span class="num">${m[0]}</span><span class="lbl">${m[1]}</span></div>`).join('') + '</div></div>';
+  const tabs = [['sd-e2e','End-to-end'],['sd-flow','Workflow'],['sd-edge','Edge cases · next iteration']];
+  h += '<div class="mod-tabs" data-tabs="dispatch">';
+  tabs.forEach((t,i) => { h += `<button class="mod-tab${i===0?' active':''}" data-mod="${t[0]}">${t[1]}</button>`; });
+  h += '</div>';
+  h += '<div class="seq-note"><i class="ti ti-info-circle"></i><span>' + d.note + '</span></div>';
+
+  /* Module 1 — end-to-end swimlane */
+  h += '<div class="mod active" id="mod-sd-e2e">';
+  h += `<div class="mod-head"><h2>${d.e2e.title}</h2><p>${d.e2e.subtitle}</p></div>`;
+  h += renderSwimlane(d.e2e);
+  h += '</div>';
+
+  /* Module 2 — workflow flowchart */
+  h += '<div class="mod" id="mod-sd-flow">';
+  h += `<div class="mod-head"><h2>${d.flow.title}</h2><p>${d.flow.subtitle}</p></div>`;
+  h += '<div class="seq-diagram"><div class="mermaid" id="mer-sd-flow"><div class="seq-loading">Rendering diagram…</div></div></div>';
+  h += '<div class="spec-grid">' + d.flow.cards.map(c => renderSpecCard(c.icon, c.title, c.items)).join('') + '</div>';
+  h += '</div>';
+
+  /* Module 3 — edge cases */
+  h += '<div class="mod" id="mod-sd-edge">';
+  h += `<div class="mod-head"><h2>${d.edge.title}</h2><p>${d.edge.subtitle}</p></div>`;
+  h += renderLegend();
+  h += '<div class="flow">' + d.edge.nodes.map(n => renderNode(n)).join('') + '</div>';
+  h += '</div>';
+  return h;
+}
+
+function renderSpecCard(icon, title, items){
+  return `<div class="spec-card"><h4><i class="ti ${icon}"></i>${title}</h4><ul>` +
+    items.map(it => `<li>${it}</li>`).join('') + '</ul></div>';
+}
+
+function renderSeqView(d, tabsKey, note){
+  d = d || SEQ;
+  tabsKey = tabsKey || 'seq';
+  let h = `<div class="view-hero"><h1>${d.hero.title[0]}<span class="em">${d.hero.title[1]}</span></h1><p>${d.hero.desc}</p>`;
+  h += '<div class="hero-meta">' + d.hero.meta.map(m => `<div><span class="num">${m[0]}</span><span class="lbl">${m[1]}</span></div>`).join('') + '</div></div>';
+  if(d.sections.length > 1){
+    h += `<div class="mod-tabs" data-tabs="${tabsKey}">`;
+    d.sections.forEach((s,i) => { h += `<button class="mod-tab${i===0?' active':''}" data-mod="${s.id}">${s.label}</button>`; });
+    h += '</div>';
+  }
+  if(note !== false){
+    h += '<div class="seq-note"><i class="ti ti-info-circle"></i><span>' + (note || 'Each flow shows the full message exchange across the customer app, platform services, and vendor app — including branches (<b>alt</b>), optional steps (<b>opt</b>), loops, and parallel fan-out (<b>par</b>). Diagrams adapt to the light/dark theme.') + '</span></div>';
+  }
+  d.sections.forEach((s,i) => {
+    h += `<div class="mod${i===0?' active':''}" id="mod-${s.id}">`;
+    h += `<div class="mod-head"><h2>${s.title}</h2><p>${s.subtitle}</p></div>`;
+    h += `<div class="seq-diagram"><div class="mermaid" id="mer-${s.id}"><div class="seq-loading">Rendering diagram…</div></div></div>`;
+    h += '<div class="spec-grid">';
+    if(s.cards){
+      s.cards.forEach(c => { h += renderSpecCard(c.icon, c.title, c.items); });
+    } else if(s.spec){
+      h += renderSpecCard('ti-api', 'Endpoints', s.spec.endpoints);
+      h += renderSpecCard('ti-broadcast', 'Real-time events', s.spec.events);
+      h += renderSpecCard('ti-arrows-transfer-down', 'State transitions', s.spec.states);
+      h += renderSpecCard('ti-alert-triangle', 'Edge cases & failure paths', s.spec.edge);
+    }
+    h += '</div>';
+    h += '</div>';
+  });
+  return h;
+}
+
+function initMermaid(){
+  if(typeof mermaid === 'undefined') return;
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const tv = dark ? {
+    primaryColor:'#2a261f', primaryBorderColor:'#e07a9e', primaryTextColor:'#f0ede4',
+    lineColor:'#8e8a80', secondaryColor:'#251f3e', tertiaryColor:'#16140f',
+    actorBkg:'#2a261f', actorBorder:'#e07a9e', actorTextColor:'#f0ede4', actorLineColor:'#6a665e',
+    signalColor:'#b6b2a8', signalTextColor:'#d8d4ca',
+    noteBkgColor:'#3a2510', noteTextColor:'#fac775', noteBorderColor:'#8a5a1e',
+    labelBoxBkgColor:'#251f3e', labelBoxBorderColor:'#4a4290', labelTextColor:'#cecbf6',
+    loopTextColor:'#cecbf6', activationBkgColor:'#332e26', activationBorderColor:'#e07a9e'
+  } : {
+    primaryColor:'#f6e1ea', primaryBorderColor:'#8a1e47', primaryTextColor:'#211f1d',
+    lineColor:'#8d8a82', secondaryColor:'#eeedfe', tertiaryColor:'#f1eee7',
+    actorBkg:'#ffffff', actorBorder:'#8a1e47', actorTextColor:'#211f1d', actorLineColor:'#c9c5bc',
+    signalColor:'#7a766e', signalTextColor:'#5f5c56',
+    noteBkgColor:'#faeeda', noteTextColor:'#633806', noteBorderColor:'#ef9f27',
+    labelBoxBkgColor:'#eeedfe', labelBoxBorderColor:'#afa9ec', labelTextColor:'#3c3489',
+    loopTextColor:'#3c3489', activationBkgColor:'#f1eee7', activationBorderColor:'#8a1e47'
+  };
+  mermaid.initialize({
+    startOnLoad:false, theme:'base', securityLevel:'loose',
+    fontFamily:"'IBM Plex Sans', sans-serif", themeVariables: tv,
+    flowchart:{ useMaxWidth:true, htmlLabels:true },
+    sequence:{ useMaxWidth:true, mirrorActors:false, wrap:true, actorMargin:46, boxMargin:9, noteMargin:9, messageMargin:34 }
+  });
+}
+
+/* Render only the diagrams that are currently VISIBLE. Mermaid cannot measure
+   text inside display:none containers, which is what caused labels to overlap
+   in inactive tabs. We therefore (re)initialize for the current theme and lazily
+   render each diagram the first time its tab/view becomes visible. */
+function renderVisibleMermaid(){
+  if(typeof mermaid === 'undefined') return;
+  initMermaid();
+  const toRender = [];
+  document.querySelectorAll('.mermaid').forEach(el => {
+    if(!el._src) return;
+    const visible = el.offsetParent !== null;
+    if(visible && !el._rendered){
+      el.removeAttribute('data-processed');
+      el.textContent = el._src;
+      toRender.push(el);
+    }
+  });
+  if(!toRender.length) return;
+  toRender.forEach(el => { el._rendered = true; });
+  try { mermaid.run({ nodes: toRender }); } catch(e){ /* no-op */ }
+}
+
+/* Force every diagram to re-render (used on theme switch). */
+function resetMermaid(){
+  document.querySelectorAll('.mermaid').forEach(el => { el._rendered = false; });
+  renderVisibleMermaid();
+}
+
+document.getElementById('view-vendor').innerHTML = renderFlowView(VENDOR,'vendor');
+document.getElementById('view-user').innerHTML = renderFlowView(USER,'user');
+document.getElementById('view-e2e').innerHTML = renderE2E();
+document.getElementById('view-seq').innerHTML = renderSeqView(SEQ, 'seq');
+document.getElementById('view-flow').innerHTML = renderSeqView(WORKFLOW, 'flow', 'A bird\u2019s-eye view of the entire platform: the unified booking\u2192settlement sequence, the booking state machine, and the service architecture. Switch sub-tabs to move between them; diagrams adapt to the light/dark theme.');
+document.getElementById('view-dispatch').innerHTML = renderDispatch();
+[...SEQ.sections, ...WORKFLOW.sections].forEach(s => {
+  const el = document.getElementById('mer-' + s.id);
+  if(el){ el._src = s.mer; }
+});
+(function(){ const el = document.getElementById('mer-sd-flow'); if(el){ el._src = DISPATCH.flow.mer; } })();
+
+/* ============ INTERACTIONS ============ */
+document.getElementById('viewNav').addEventListener('click', e => {
+  const btn = e.target.closest('.view-btn');
+  if(!btn) return;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + btn.dataset.view).classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+  renderVisibleMermaid();
+});
+
+document.body.addEventListener('click', e => {
+  const tab = e.target.closest('.mod-tab');
+  if(!tab) return;
+  const group = tab.closest('.mod-tabs');
+  group.querySelectorAll('.mod-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  const view = tab.closest('.view');
+  view.querySelectorAll('.mod').forEach(m => m.classList.remove('active'));
+  view.querySelector('#mod-' + tab.dataset.mod).classList.add('active');
+  renderVisibleMermaid();
+});
+
+const tt = document.getElementById('themeToggle');
+const html = document.documentElement;
+function setTheme(t){
+  html.setAttribute('data-theme', t);
+  tt.innerHTML = t === 'dark' ? '<i class="ti ti-sun"></i>' : '<i class="ti ti-moon"></i>';
+  try { localStorage.setItem('lld-theme', t); } catch(e){}
+  resetMermaid();
+}
+tt.addEventListener('click', () => setTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+try {
+  const saved = localStorage.getItem('lld-theme');
+  if(saved) setTheme(saved);
+  else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
+} catch(e){}
+
+document.getElementById('footStamp').textContent = 'generated ' + new Date().toISOString().slice(0,10);
+
+renderVisibleMermaid();
+</script>
+</body>
+</html>
