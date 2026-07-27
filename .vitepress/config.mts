@@ -107,6 +107,7 @@ export default withMermaid(defineConfig({
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
+      { text: 'Profile', link: '/profile' },
       { text: 'PostgreSQL Notes', link: '/notes/postgresql-notes' },
       { text: 'Socket.IO Notes', link: '/notes/socket' }
     ],
