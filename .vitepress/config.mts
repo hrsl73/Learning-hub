@@ -108,6 +108,7 @@ export default withMermaid(defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Profile', link: '/profile' },
+      { text: 'VitePress Notes', link: '/notes/vitepress-notes' },
       { text: 'PostgreSQL Notes', link: '/notes/postgresql-notes' },
       { text: 'Socket.IO Notes', link: '/notes/socket' }
     ],
