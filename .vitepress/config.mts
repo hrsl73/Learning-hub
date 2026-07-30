@@ -110,7 +110,8 @@ export default withMermaid(defineConfig({
       { text: 'Profile', link: '/profile' },
       { text: 'VitePress Notes', link: '/notes/vitepress-notes' },
       { text: 'PostgreSQL Notes', link: '/notes/postgresql-notes' },
-      { text: 'Socket.IO Notes', link: '/notes/socket' }
+      { text: 'Socket.IO Notes', link: '/notes/socket' },
+      { text: 'Flutter WebView Notes', link: '/notes/flutter-webview' }
     ],
     
     sidebar: getSidebar(),
