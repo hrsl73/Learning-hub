@@ -3,51 +3,110 @@ title: Developer Profile
 aside: false
 ---
 
-# Hi, I'm Harshil Mayani! 👋
+<div class="profile-container">
 
-I'm a software developer focused on building automation workflows, real-time networking systems, and exploring backend engineering.
+<div class="profile-hero">
+  <img src="https://github.com/hrsl73.png" alt="Harshil Mayani" class="profile-avatar" />
+  <div class="profile-info">
+    <h1 class="profile-name">Harshil Mayani 👋</h1>
+    <div class="profile-bio">
+      Software engineer passionate about building high-performance backend systems, real-time networking, mobile applications, and automation tools.
+    </div>
+    <div class="profile-pills">
+      <span class="profile-pill">🌱 Deep-diving into DBs, WebSockets & Architecture</span>
+      <span class="profile-pill">💬 Ask me about TS, Node.js, Python, & Flutter</span>
+      <span class="profile-pill">📍 Open to Learning & Collaboration</span>
+    </div>
+  </div>
+</div>
 
-- 🌱 I’m currently deep-diving into databases, sockets, and web architecture at my [Learning Hub](https://github.com/hrsl73/Learning-hub).
-- 💬 Ask me about: TypeScript, Node.js, Python, and WebSockets.
+<div class="profile-section-heading">🛠️ Tech Stack & Core Competencies</div>
 
----
+<div class="profile-skills-grid">
 
-### 🛠️ Tech Stack & Skills
+  <div class="profile-skill-card">
+    <div class="profile-skill-cat">Languages</div>
+    <div class="profile-tech-tags">
+      <span class="profile-tech-tag">🟨 JavaScript</span>
+      <span class="profile-tech-tag">🟦 TypeScript</span>
+      <span class="profile-tech-tag">🐍 Python</span>
+      <span class="profile-tech-tag">🎯 Dart</span>
+    </div>
+  </div>
 
-#### Languages
-![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
-![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
+  <div class="profile-skill-card">
+    <div class="profile-skill-cat">Frontend & Mobile</div>
+    <div class="profile-tech-tags">
+      <span class="profile-tech-tag">⚛️ React</span>
+      <span class="profile-tech-tag">💙 Flutter</span>
+      <span class="profile-tech-tag">🌐 HTML5 / CSS3</span>
+      <span class="profile-tech-tag">⚡ VitePress</span>
+    </div>
+  </div>
 
-#### Frontend & Frameworks
-![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
-![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
+  <div class="profile-skill-card">
+    <div class="profile-skill-cat">Backend & Databases</div>
+    <div class="profile-tech-tags">
+      <span class="profile-tech-tag">🟢 Node.js</span>
+      <span class="profile-tech-tag">⚙️ Express.js</span>
+      <span class="profile-tech-tag">🐘 PostgreSQL</span>
+      <span class="profile-tech-tag">🔌 Socket.IO</span>
+    </div>
+  </div>
 
-#### Backend & Databases
-![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
-![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
-![Socket.io](https://img.shields.io/badge/Socket.io-black?style=for-the-badge&logo=socket.dot.io&logoColor=white)
+  <div class="profile-skill-card">
+    <div class="profile-skill-cat">Tools & Infrastructure</div>
+    <div class="profile-tech-tags">
+      <span class="profile-tech-tag">🐙 Git & GitHub</span>
+      <span class="profile-tech-tag">💻 VS Code</span>
+      <span class="profile-tech-tag">▲ Vercel</span>
+      <span class="profile-tech-tag">🔔 FCM & APNs</span>
+    </div>
+  </div>
 
-#### Tools & DevOps
-![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
-![VS Code](https://img.shields.io/badge/Visual%20Studio%20Code-0078d7.svg?style=for-the-badge&logo=visual-studio-code&logoColor=white)
-![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
+</div>
 
----
+<div class="profile-section-heading">🚀 Highlighted Projects</div>
 
-### 🚀 Highlighted Work
+<div class="profile-projects-grid">
 
-* **[terminal-sound](https://github.com/hrsl73/terminal-sound)** - A VS Code extension that plays success/failure sounds when terminal commands exit. (TypeScript)
-* **[Learning-hub](https://github.com/hrsl73/Learning-hub)** - My personal, searchable knowledge base compiling detailed notes on PostgreSQL and real-time networking. (Python / VitePress)
+  <a href="https://github.com/hrsl73/terminal-sound" target="_blank" rel="noopener" class="profile-project-card">
+    <div>
+      <div class="profile-project-title">🔊 terminal-sound</div>
+      <div class="profile-project-desc">
+        A VS Code extension that plays custom audio chimes and success/failure sound notifications when integrated terminal commands finish executing.
+      </div>
+    </div>
+    <div class="profile-tech-tags">
+      <span class="profile-tech-tag">TypeScript</span>
+      <span class="profile-tech-tag">VS Code API</span>
+    </div>
+  </a>
 
----
+  <a href="https://github.com/hrsl73/Learning-hub" target="_blank" rel="noopener" class="profile-project-card">
+    <div>
+      <div class="profile-project-title">📚 Learning Hub</div>
+      <div class="profile-project-desc">
+        Personal structured knowledge base and VitePress documentation platform compiling deep-dive technical notes on system architecture, databases, and networking.
+      </div>
+    </div>
+    <div class="profile-tech-tags">
+      <span class="profile-tech-tag">VitePress</span>
+      <span class="profile-tech-tag">System Design</span>
+    </div>
+  </a>
 
-### 📈 GitHub Stats
+</div>
 
-<p align="left">
-  <img src="https://github-readme-stats-seven-psi-34.vercel.app/api?username=hrsl73&show_icons=true&theme=tokyonight&count_private=true&include_all_commits=true&cache_seconds=86400" alt="Harshil's GitHub Stats" height="150" />
-  <img src="https://github-readme-stats-seven-psi-34.vercel.app/api/top-langs/?username=hrsl73&layout=compact&theme=tokyonight&count_private=true&cache_seconds=86400&hide=python" alt="Top Langs" height="150" />
-</p>
+<div class="profile-section-heading">📈 GitHub Analytics & Activity</div>
 
-<!--START_SECTION:activity-->
-<!--END_SECTION:activity-->
+<div class="profile-stats-container">
+  <div class="profile-stat-box">
+    <img src="https://github-readme-stats-seven-psi-34.vercel.app/api?username=hrsl73&show_icons=true&theme=tokyonight&count_private=true&include_all_commits=true&cache_seconds=86400" alt="Harshil's GitHub Stats" />
+  </div>
+  <div class="profile-stat-box">
+    <img src="https://github-readme-stats-seven-psi-34.vercel.app/api/top-langs/?username=hrsl73&layout=compact&theme=tokyonight&count_private=true&cache_seconds=86400" alt="Top Languages" />
+  </div>
+</div>
+
+</div>

@@ -24,7 +24,6 @@ function getFileTitle(filePath: string, defaultName: string) {
     const content = fs.readFileSync(filePath, 'utf-8')
     const match = content.match(/^#\s+(.+)$/m)
     if (match && match[1]) {
-      // Strip emojis if you want clean text, or leave them. Let's keep them!
       return match[1].trim()
     }
   } catch (e) {
@@ -33,17 +32,29 @@ function getFileTitle(filePath: string, defaultName: string) {
   return toTitleCase(defaultName.replace('-notes', '').replace('notes', ''))
 }
 
+const categoryEmojis: Record<string, string> = {
+  databases: '🗄️',
+  networking: '⚡',
+  mobile: '📲',
+  tooling: '🛠️'
+}
+
+function getCategoryTitle(folderName: string) {
+  const emoji = categoryEmojis[folderName.toLowerCase()] || '📁'
+  return `${emoji} ${toTitleCase(folderName)}`
+}
+
 function getSidebar() {
   const notesDir = path.resolve(__dirname, '../notes')
   if (!fs.existsSync(notesDir)) {
-    return []
+    return {}
   }
 
-  const sidebar: any[] = []
+  const sidebarObj: Record<string, any[]> = {}
   const items = fs.readdirSync(notesDir, { withFileTypes: true })
-
-  // 1. Handle subdirectories first (these will be sidebar categories)
   const subdirs = items.filter(item => item.isDirectory())
+  const globalSidebar: any[] = []
+
   for (const subdir of subdirs) {
     const dirPath = path.join(notesDir, subdir.name)
     const files = fs.readdirSync(dirPath)
@@ -58,40 +69,31 @@ function getSidebar() {
       })
 
     if (files.length > 0) {
-      sidebar.push({
-        text: toTitleCase(subdir.name),
+      const title = getCategoryTitle(subdir.name)
+      const section = {
+        text: title,
         items: files,
         collapsed: false
-      })
+      }
+
+      // Scoped multi-sidebar per category folder
+      sidebarObj[`/notes/${subdir.name}/`] = [section]
+      globalSidebar.push(section)
     }
   }
 
-  // 2. Handle files directly in notes/
-  const directFiles = items
-    .filter(item => item.isFile() && item.name.endsWith('.md') && item.name.toLowerCase() !== 'index.md')
-    .map(item => {
-      const nameWithoutExt = path.basename(item.name, '.md')
-      const fullPath = path.join(notesDir, item.name)
-      return {
-        text: getFileTitle(fullPath, nameWithoutExt),
-        link: `/notes/${nameWithoutExt}`
-      }
-    })
+  // Root /notes/ overview fallback
+  sidebarObj['/notes/'] = globalSidebar
 
-  if (directFiles.length > 0) {
-    sidebar.push({
-      text: 'General Notes',
-      items: directFiles,
-      collapsed: false
-    })
-  }
-
-  return sidebar
+  return sidebarObj
 }
 
 export default withMermaid(defineConfig({
   title: "Harshil's Learning Hub",
   description: "Personal Knowledge Base & Notes",
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]
+  ],
   
   // Set srcDir to root so it compiles index.md at root
   srcDir: '.',
@@ -107,12 +109,8 @@ export default withMermaid(defineConfig({
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Profile', link: '/profile' },
-      { text: 'VitePress Notes', link: '/notes/vitepress-notes' },
-      { text: 'PostgreSQL Notes', link: '/notes/postgresql-notes' },
-      { text: 'Socket.IO Notes', link: '/notes/socket' },
-      { text: 'Flutter WebView Notes', link: '/notes/flutter-webview' },
-      { text: 'Push Notifications Notes', link: '/notes/push-notifications-notes' }
+      { text: 'Study Hub 📚', link: '/notes/' },
+      { text: 'Profile 👤', link: '/profile' }
     ],
     
     sidebar: getSidebar(),
