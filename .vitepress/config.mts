@@ -92,7 +92,10 @@ export default withMermaid(defineConfig({
   title: "Harshil's Learning Hub",
   description: "Personal Knowledge Base & Notes",
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]
+    ['link', { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+    ['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+    ['link', { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' }]
   ],
   
   // Set srcDir to root so it compiles index.md at root
