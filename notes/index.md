@@ -11,7 +11,7 @@ sidebar: true
     Deep-dive technical notes, system architecture breakdowns, and interview-ready conceptual references.
   </div>
   <div class="hub-stats">
-    <div class="hub-stat-item">📚 <span>5 Comprehensive Notes</span></div>
+    <div class="hub-stat-item">📚 <span>6 Comprehensive Notes</span></div>
     <div class="hub-stat-item">🎯 <span>Interview One-Liners</span></div>
     <div class="hub-stat-item">⚡ <span>System Design & Architecture</span></div>
   </div>
@@ -50,6 +50,23 @@ sidebar: true
       <div class="hub-card-title">WebSockets & Socket.IO</div>
       <div class="hub-card-desc">
         Full-duplex real-time protocol mechanics, HTTP 101 handshake, polling fallbacks, room broadcasting, and Redis adapter scaling.
+      </div>
+    </div>
+    <div class="hub-card-footer">
+      <span>Read Full Note</span>
+      <span>→</span>
+    </div>
+  </a>
+
+  <a href="/notes/networking/progressive-web-apps" class="hub-card">
+    <div>
+      <div class="hub-card-header">
+        <span class="hub-card-icon">🌐</span>
+        <span class="hub-badge badge-network">Networking</span>
+      </div>
+      <div class="hub-card-title">Progressive Web Apps (PWAs)</div>
+      <div class="hub-card-desc">
+        Service Worker lifecycle, caching strategies, Web Push Protocol, Background Sync, Workbox, and the real gotchas of shipping PWAs to production.
       </div>
     </div>
     <div class="hub-card-footer">
