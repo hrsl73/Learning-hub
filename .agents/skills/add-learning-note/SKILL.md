@@ -85,6 +85,19 @@ Confirm the following before handing back to the user:
 - [ ] If new category: `categoryEmojis` updated in `.vitepress/config.mts` and root `index.md` feature card added
 - [ ] All Mermaid blocks use valid syntax (no HTML tags inside node labels, quote labels with special chars)
 
+### Step 7 — Confirm & Push to Main Branch
+Once the note and integrations are complete and verified, ask the user for explicit confirmation before pushing to production:
+
+1. **Format Commit Message**: Use the topic title, e.g., `feat(notes): <Topic Name>` (e.g. `feat(notes): Service Worker Architecture & Offline Proxying`).
+2. **Ask Confirmation**: Prompt the user with the proposed commit message and target branch (`main`).
+3. **Execute Push Upon Confirmation**:
+   ```bash
+   git add .
+   git commit -m "feat(notes): <Topic Name>"
+   git push origin main
+   ```
+4. Confirm to the user that the commit has been successfully pushed and Vercel auto-deployment is triggered.
+
 ---
 
 ## Naming Conventions
@@ -97,3 +110,4 @@ Confirm the following before handing back to the user:
 - Touch `.vitepress/config.mts` sidebar logic — it auto-builds from the folder
 - Run `npm run build` or `npm run dev` unless the user explicitly asks
 - Create files in the stale `recap/` directory
+

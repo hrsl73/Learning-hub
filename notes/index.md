@@ -11,7 +11,7 @@ sidebar: true
     Deep-dive technical notes, system architecture breakdowns, and interview-ready conceptual references.
   </div>
   <div class="hub-stats">
-    <div class="hub-stat-item">📚 <span>6 Comprehensive Notes</span></div>
+    <div class="hub-stat-item">📚 <span>7 Comprehensive Notes</span></div>
     <div class="hub-stat-item">🎯 <span>Interview One-Liners</span></div>
     <div class="hub-stat-item">⚡ <span>System Design & Architecture</span></div>
   </div>
@@ -67,6 +67,23 @@ sidebar: true
       <div class="hub-card-title">Progressive Web Apps (PWAs)</div>
       <div class="hub-card-desc">
         Service Worker lifecycle, caching strategies, Web Push Protocol, Background Sync, Workbox, and the real gotchas of shipping PWAs to production.
+      </div>
+    </div>
+    <div class="hub-card-footer">
+      <span>Read Full Note</span>
+      <span>→</span>
+    </div>
+  </a>
+
+  <a href="/notes/networking/service-worker-notes" class="hub-card">
+    <div>
+      <div class="hub-card-header">
+        <span class="hub-card-icon">⚙️</span>
+        <span class="hub-badge badge-network">Networking</span>
+      </div>
+      <div class="hub-card-title">Service Worker Architecture & Offline Proxying</div>
+      <div class="hub-card-desc">
+        Programmable network proxy thread, event-driven lifecycle, CacheStorage vs IndexedDB, Workbox caching strategies, and preventing stale production lockout.
       </div>
     </div>
     <div class="hub-card-footer">
