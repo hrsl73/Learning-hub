@@ -26,6 +26,10 @@ features:
     title: Networking & Realtime
     details: WebSockets vs Polling, HTTP 101 upgrade handshake, Socket.IO room architecture, and horizontal scaling.
     link: /notes/networking/socket
+  - icon: ⚙️
+    title: Operating Systems & Runtime
+    details: Process virtual address space, PCB/TCB context switches, TLB flushes, IPC, and language runtime concurrency models.
+    link: /notes/operating-systems/thread-and-process-notes
 ---
 
 <style>
