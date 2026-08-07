@@ -8,7 +8,7 @@ sidebar: true
 <div class="hub-hero">
   <div class="hub-hero-title">📘 Study Notes & Knowledge Hub</div>
   <div class="hub-hero-subtitle">
-    Deep-dive technical notes, system architecture breakdowns, and interview-ready conceptual references.
+    Deep-dive technical notes, system architecture breakdowns, and interview-ready conceptual references. 
   </div>
   <div class="hub-stats">
     <div class="hub-stat-item">📚 <span>8 Comprehensive Notes</span></div>
