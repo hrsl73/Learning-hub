@@ -11,7 +11,7 @@ sidebar: true
     Deep-dive technical notes, system architecture breakdowns, and interview-ready conceptual references.
   </div>
   <div class="hub-stats">
-    <div class="hub-stat-item">📚 <span>8 Comprehensive Notes</span></div>
+    <div class="hub-stat-item">📚 <span>9 Comprehensive Notes</span></div>
     <div class="hub-stat-item">🎯 <span>Interview One-Liners</span></div>
     <div class="hub-stat-item">⚡ <span>System Design & Architecture</span></div>
   </div>
@@ -143,6 +143,23 @@ sidebar: true
       <div class="hub-card-title">Thread vs Process Architecture</div>
       <div class="hub-card-desc">
         Virtual address space isolation, PCB/TCB structures, TLB cache flushes, context switching overhead, IPC mechanisms, and language runtime concurrency models.
+      </div>
+    </div>
+    <div class="hub-card-footer">
+      <span>Read Full Note</span>
+      <span>→</span>
+    </div>
+  </a>
+
+  <a href="/notes/operating-systems/cron-jobs-notes" class="hub-card">
+    <div>
+      <div class="hub-card-header">
+        <span class="hub-card-icon">⏰</span>
+        <span class="hub-badge badge-mobile">OS & Runtime</span>
+      </div>
+      <div class="hub-card-title">Cron Jobs & OS Task Scheduling</div>
+      <div class="hub-card-desc">
+        Under-the-hood crond daemon lifecycle, crontab syntax breakdown, process isolation via fork/execve, flock race condition prevention, and distributed schedulers.
       </div>
     </div>
     <div class="hub-card-footer">
