@@ -18,13 +18,18 @@ function toTitleCase(str: string) {
     .join(' ')
 }
 
-// Helper to extract first # Header from Markdown file
+// Helper to extract title from Markdown frontmatter or first # Header
 function getFileTitle(filePath: string, defaultName: string) {
   try {
     const content = fs.readFileSync(filePath, 'utf-8')
+    const fmMatch = content.match(/^title:\s*["']?([^"'\n]+)["']?/m)
+    if (fmMatch && fmMatch[1] && fmMatch[1].toLowerCase() !== 'study notes hub' && fmMatch[1].toLowerCase() !== 'engineering guides hub') {
+      return fmMatch[1].trim()
+    }
     const match = content.match(/^#\s+(.+)$/m)
     if (match && match[1]) {
-      return match[1].trim()
+      // Remove leading emojis for a clean sidebar
+      return match[1].replace(/^[\p{Emoji}\s]+/u, '').trim()
     }
   } catch (e) {
     // Ignore error and fallback to default name
@@ -40,7 +45,9 @@ const categoryEmojis: Record<string, string> = {
   'operating-systems': '⚙️',
   'distributed-systems': '📡',
   'system-design': '🏗️',
-  'web-engineering': '🌐'
+  'web-engineering': '🌐',
+  'git-workflow': '🔀',
+  'devops': '🚀'
 }
 
 function getCategoryTitle(folderName: string) {
@@ -93,7 +100,7 @@ function getSidebar() {
 }
 
 export default withMermaid(defineConfig({
-  title: "DevEngine — Applied Engineering Hub",
+  title: "DevEngine 🚀",
   description: "Master practical production engineering, distributed systems, database internals, and real-world debugging scenarios.",
   head: [
     ['link', { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
@@ -116,7 +123,7 @@ export default withMermaid(defineConfig({
   themeConfig: {
     nav: [
       { text: 'Home 🏠', link: '/' },
-      { text: 'Engineering Guides 📚', link: '/notes/' },
+      { text: 'Guides 📚', link: '/notes/' },
       { text: 'Kafka Deep-Dive 📡', link: '/notes/distributed-systems/kafka-notes' }
     ],
     
@@ -136,3 +143,4 @@ export default withMermaid(defineConfig({
     }
   }
 }))
+

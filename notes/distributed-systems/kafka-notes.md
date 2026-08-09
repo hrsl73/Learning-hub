@@ -1,3 +1,7 @@
+---
+title: Apache Kafka Architecture
+---
+
 # 📡 Apache Kafka: Architecture, Event Streaming & Production Engineering
 
 > **Prerequisites:** Basic understanding of Publish/Subscribe messaging and Client-Server architecture  
