@@ -93,8 +93,8 @@ function getSidebar() {
 }
 
 export default withMermaid(defineConfig({
-  title: "Harshil's Learning Hub",
-  description: "Personal Knowledge Base & Notes",
+  title: "DevEngine — Applied Engineering Hub",
+  description: "Master practical production engineering, distributed systems, database internals, and real-world debugging scenarios.",
   head: [
     ['link', { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     ['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }],
@@ -115,9 +115,9 @@ export default withMermaid(defineConfig({
 
   themeConfig: {
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Study Hub 📚', link: '/notes/' },
-      { text: 'Profile 👤', link: '/profile' }
+      { text: 'Home 🏠', link: '/' },
+      { text: 'Engineering Guides 📚', link: '/notes/' },
+      { text: 'Kafka Deep-Dive 📡', link: '/notes/distributed-systems/kafka-notes' }
     ],
     
     sidebar: getSidebar(),
@@ -131,8 +131,8 @@ export default withMermaid(defineConfig({
     },
 
     footer: {
-      message: 'Compiled automatically with VitePress.',
-      copyright: `Copyright © ${new Date().getFullYear()} Harshil Mayani`
+      message: 'Practical Production Engineering over Pure Theory.',
+      copyright: `Copyright © ${new Date().getFullYear()} DevEngine`
     }
   }
 }))

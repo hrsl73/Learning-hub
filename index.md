@@ -2,39 +2,51 @@
 layout: home
 
 hero:
-  name: "Learning Hub"
-  text: "My Personal Knowledge Base"
-  tagline: "A structured study platform of concepts, system designs, and technical notes."
+  name: "DevEngine"
+  text: "Master Practical Production Engineering"
+  tagline: "Move beyond passive reading and theoretical DSA. Learn distributed systems, database internals, and real-world failure post-mortems through interactive visual guides."
   actions:
     - theme: brand
-      text: Explore Study Hub 📚
+      text: Explore Guides 🚀
       link: /notes/
     - theme: alt
-      text: View Profile 👤
-      link: /profile
+      text: Kafka Deep-Dive 📡
+      link: /notes/distributed-systems/kafka-notes
 
 features:
+  - icon: 📡
+    title: Distributed Systems & Event Streams
+    details: Master high-throughput event streaming with Apache Kafka, consumer group rebalancing, partition key hashing, and handling production outage storms.
+    link: /notes/distributed-systems/kafka-notes
   - icon: 🗄️
-    title: Databases & Storage
-    details: Deep dive into PostgreSQL internals, indexing strategies, MVCC, transaction isolation, and query optimization.
+    title: Database Engineering & Internals
+    details: Deep dive into PostgreSQL B-Tree vs BRIN indexes, query execution planner (EXPLAIN ANALYZE), MVCC, transaction isolation levels, and PgBouncer.
     link: /notes/databases/postgresql-notes
-  - icon: 🔔
-    title: Mobile & Push Systems
-    details: Architecture of FCM vs APNs, OS background daemons, device tokens, and Android fullScreenIntent vs iOS CallKit.
-    link: /notes/mobile/push-notifications-notes
   - icon: ⚡
-    title: Networking & Realtime
-    details: WebSockets vs Polling, HTTP 101 upgrade handshake, Socket.IO room architecture, and horizontal scaling.
-    link: /notes/networking/socket
+    title: Web & Browser Engineering
+    details: Service Worker lifecycle, Workbox caching strategies, Web Worker multi-threading, PWA offline resilience, and HTTP/2 vs HTTP/3 QUIC protocol.
+    link: /notes/networking/progressive-web-apps
   - icon: ⚙️
-    title: Operating Systems & Runtime
-    details: Process virtual address space, PCB/TCB context switches, TLB flushes, IPC, and language runtime concurrency models.
+    title: OS & Process Internals
+    details: Process vs Thread virtual address space, Linux I/O multiplexing (epoll vs select), kernel context switching, and Node.js event loop thread pool.
     link: /notes/operating-systems/thread-and-process-notes
+  - icon: 🏗️
+    title: System Design & Resiliency
+    details: Distributed rate limiting (Token Bucket/Sliding Window), Circuit Breaker fault tolerance, gRPC vs REST vs WebSockets, and horizontal sharding.
+    link: /notes/networking/socket
+  - icon: 🧪
+    title: Applied Micro-Challenges
+    details: Test your real-world problem-solving skills with practical debugging scenarios, post-mortems, and system outage recovery exercises instead of DSA puzzles.
+    link: /notes/
 ---
 
 <style>
 :root {
   --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  --vp-home-hero-name-background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+}
+
+.dark {
+  --vp-home-hero-name-background: linear-gradient(135deg, #60a5fa 0%, #c084fc 50%, #f472b6 100%);
 }
 </style>

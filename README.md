@@ -1,8 +1,6 @@
-# 🎓 Learning Hub
+# 🚀 DevEngine — Applied Engineering Platform
 
-> A structured, searchable knowledge base compiling concepts, system designs, and workflows I have learned.
-
-This repository serves as a personal wiki and notes center. It compiles detailed guides on database systems, networking, web architectures, and automation scripts.
+> **Core Motto:** Master practical production engineering over pure theory. An interactive platform focused on distributed systems, database internals, and real-world failure post-mortems.
 
 Built using **[VitePress](https://vitepress.dev/)** for a high-performance, dark-mode-ready static site, and integrated with **[Mermaid](https://mermaid.js.org/)** for rendering interactive visual diagrams directly from markdown.
 
