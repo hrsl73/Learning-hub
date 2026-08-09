@@ -37,7 +37,10 @@ const categoryEmojis: Record<string, string> = {
   networking: '⚡',
   mobile: '📲',
   tooling: '🛠️',
-  'operating-systems': '⚙️'
+  'operating-systems': '⚙️',
+  'distributed-systems': '📡',
+  'system-design': '🏗️',
+  'web-engineering': '🌐'
 }
 
 function getCategoryTitle(folderName: string) {
