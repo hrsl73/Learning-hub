@@ -30,7 +30,13 @@ Even numbers (`int`, `double`), booleans (`bool`), and functions are instances o
 ### 1.2 Static Typing with Sound Type Guarantees
 Dart is **statically typed** with **sound typing**. 
 * **Static typing:** Type checking occurs at compile time.
-* **Sound typing:** The type system guarantees that an expression of type `T` will **never** evaluate to an object that is not a `T` at runtime.
+* **Sound typing:** The type system guarantees that an expression of type \`T\` will **never** evaluate to an object that is not a \`T\` at runtime. <a href="#qa-sound-typing" class="qa-inline-badge" title="Jump to Q&A deep dive on Sound Typing">ℹ️ What is Sound Typing?</a>
+
+::: details 💡 Quick Preview: What does "Sound Typing" mean in plain English?
+In simple terms: In an **unsound** language (like TypeScript), the compiler can say *"variable X is definitely a String"*, but at runtime X actually holds an `int` or `undefined` due to `any` or type casting, causing a crash.  
+In a **sound** language like modern Dart, **the compiler's guarantee is absolute**. If code compiled stating `name` is a `String`, the Dart VM guarantees it can *never* contain an `int`, `null`, or unexpected type at runtime.  
+👉 <a href="#qa-sound-typing">Click here to jump to the full Q&A breakdown & TypeScript comparison below</a>
+:::
 
 | Language | Type System | Soundness | Failure Behavior |
 |---|---|---|---|
@@ -380,4 +386,71 @@ Before moving forward, test your intuition against these 4 questions:
 
 > This section is your personal, living knowledge log. As you read through the notes above, ask any question—from subtle syntax quirks to deep architectural doubts. Each question and its production-grade explanation will be documented right here for your long-term reference.
 
-*(Awaiting your questions to populate this bank...)*
+<div id="qa-sound-typing" class="qa-card">
+  <div class="qa-header">
+    <h3 class="qa-question-title">❓ Q1: What exactly is "Sound Typing" and why does it matter?</h3>
+    <span class="qa-tag">Type System & Runtime</span>
+  </div>
+
+  <p><strong>The Core Doubt:</strong> <em>"The type system guarantees that an expression of type T will never evaluate to an object that is not a T at runtime." What does this actually mean in practice, and how is it different from languages like TypeScript or Java?</em></p>
+
+  <hr style="margin: 1rem 0; border: none; border-top: 1px dashed var(--vp-c-divider);" />
+
+  <h4>1. The Real-World Analogy: Airport Security vs Trust System</h4>
+  <ul>
+    <li><strong>Unsound Typing (e.g. TypeScript):</strong> Like a paper ticket checked with a quick glance at the airport entrance, but with <em>no gate security before boarding</em>. If someone hands you a forged ticket marked "VIP First Class" (using <code>any</code> or a type cast), you might get seated, only for the plane staff to realize mid-flight that your seat does not exist.</li>
+    <li><strong>Sound Typing (Dart):</strong> Like a biometric scanner synchronized with passport control at the gate. It is <strong>physically impossible</strong> to board unless your biometric identity matches the ticket. If you claim to be a <code>String</code>, the Dart VM ensures you are an actual <code>String</code> object in memory.</li>
+  </ul>
+
+  <h4>2. The "Unsound" Counterexample: How TypeScript Can Lie</h4>
+  <p>In TypeScript, types are <em>erased</em> at compile time. JavaScript has zero awareness of types at runtime. Look at this valid TypeScript code:</p>
+
+```typescript
+// TypeScript (Unsound by design)
+function parseUser(jsonString: string) {
+  // Developer tells the compiler: "Trust me, this is a string"
+  const payload = JSON.parse(jsonString) as { name: string };
+  
+  // Compiler is 100% happy here! No red squiggly lines!
+  console.log(payload.name.toUpperCase());
+}
+
+// But in production:
+parseUser('{"name": 12345}'); 
+// 💥 RUNTIME EXPLOSION: TypeError: payload.name.toUpperCase is not a function!
+// The static type said "string", but at runtime it was a "number"!
+```
+
+  <h4>3. The Dart Guarantee: The VM Never Lies</h4>
+  <p>In modern Dart, the compiler and the Dart VM work together in a contract:</p>
+
+```dart
+void printUsername(String name) {
+  print(name.toUpperCase()); // The VM guarantees: name IS a String. Guaranteed.
+}
+```
+
+  <p>If you receive JSON from an API in Dart, you <strong>cannot</strong> just lie to the compiler with an unchecked cast without the runtime verifying it:</p>
+
+```dart
+Map<String, dynamic> json = {"name": 12345};
+
+// ❌ At runtime, this throws an immediate, clean CastError at the boundary line:
+// String name = json["name"] as String; 
+// Crash happens IMMEDIATELY at the assignment, NOT 50 lines later inside printUsername()!
+```
+
+  <h4>4. 🚀 The Secret Superpower: Why Flutter Apps Run So Fast</h4>
+  <p>Sound typing is not just about avoiding bugs—it is the <strong>#1 secret behind Flutter's AOT (Ahead-of-Time) performance</strong>:</p>
+  <ul>
+    <li><strong>In JavaScript / Unsound engines:</strong> Because a variable typed as a string could secretly morph into an integer or object, the JS engine (like V8) must constantly keep <em>type checks and inline caches</em> in machine code before every operation ("Check: is this still a string? If yes, call toUpperCase, else bailout").</li>
+    <li><strong>In Dart AOT Compilation:</strong> Because the Dart compiler knows with 100% mathematical certainty that <code>T</code> is always <code>T</code>, it <strong>strips out all defensive type checks from the compiled machine code</strong>. It directly generates raw CPU register instructions.</li>
+    <li><strong>Result:</strong> Smaller compiled binary sizes (APK / IPA), instant startup times, and 0% CPU wasted on defensive type-checking.</li>
+  </ul>
+
+  <a href="#12-static-typing-with-sound-type-guarantees" class="qa-back-link">
+    <span>↑ Back to Section 1.2 in notes</span>
+  </a>
+</div>
+
+*(Have another question? Ask below and it will be documented here!)*

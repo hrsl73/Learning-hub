@@ -377,3 +377,93 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Q&A Interactive Elements */
+.qa-inline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.18rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6366f1 !important;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 9999px;
+  text-decoration: none !important;
+  vertical-align: middle;
+  margin-left: 0.4rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.qa-inline-badge:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: #6366f1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+.qa-card {
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-left: 4px solid var(--vp-c-brand-1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  transition: all 0.25s ease;
+  scroll-margin-top: 80px;
+}
+
+.qa-card:target {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4), 0 8px 24px rgba(99, 102, 241, 0.15);
+  animation: qa-pulse 1.5s ease-out;
+}
+
+@keyframes qa-pulse {
+  0% { background-color: rgba(99, 102, 241, 0.12); }
+  100% { background-color: var(--vp-c-bg-soft); }
+}
+
+.qa-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.qa-question-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--vp-c-text-1);
+  margin: 0;
+}
+
+.qa-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
+}
+
+.qa-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--vp-c-brand-1);
+  margin-top: 1rem;
+  text-decoration: none !important;
+}
+
+.qa-back-link:hover {
+  text-decoration: underline !important;
+}
