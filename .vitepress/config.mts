@@ -40,6 +40,7 @@ function getFileTitle(filePath: string, defaultName: string) {
 const categoryEmojis: Record<string, string> = {
   databases: '🗄️',
   networking: '⚡',
+  dart: '🎯',
   mobile: '📲',
   tooling: '🛠️',
   'operating-systems': '⚙️',

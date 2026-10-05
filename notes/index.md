@@ -211,6 +211,28 @@ sidebar: true
   </a>
 </div>
 
+
+<div class="hub-section-title">🎯 Dart Language Mastery</div>
+
+<div class="hub-grid">
+  <a href="/notes/dart/phase-1-foundations-and-type-system" class="hub-card">
+    <div>
+      <div class="hub-card-header">
+        <span class="hub-card-icon">🎯</span>
+        <span class="hub-badge badge-mobile">Dart Phase 1</span>
+      </div>
+      <div class="hub-card-title">Foundations, Type System & Sound Null Safety</div>
+      <div class="hub-card-desc">
+        Pure OOP object model, compile-time canonicalization with const, sound null safety lattice, flow analysis, late keyword traps, and Flutter GC memory optimization.
+      </div>
+    </div>
+    <div class="hub-card-footer">
+      <span>Read Phase 1 Guide</span>
+      <span>→</span>
+    </div>
+  </a>
+</div>
+
 <div class="hub-section-title">🛠️ Tooling & Documentation</div>
 
 <div class="hub-grid">
